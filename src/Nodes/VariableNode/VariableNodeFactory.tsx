@@ -10,13 +10,14 @@ import {
   VariableRenderContent,
   VariableVisualProps,
 } from "./VariableNodeWidget";
+import { NodeTypes } from "../ParentNode/ParentNodeModel";
 
 export class VariableNodeFactory extends AbstractReactFactory<
   VariableNodeModel,
   DiagramEngine
 > {
   constructor() {
-    super("variable");
+    super(NodeTypes.Variable);
   }
 
   generateReactWidget(

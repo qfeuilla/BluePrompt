@@ -1,5 +1,5 @@
 import { DeserializeEvent } from "@projectstorm/react-diagrams";
-import { ParentNodeModel, ParentNodeModelOptions } from "../../ParentNode/ParentNodeModel";
+import { NodeTypes, ParentNodeModel, ParentNodeModelOptions } from "../../ParentNode/ParentNodeModel";
 import {Point} from "@projectstorm/geometry"
 import { PromptType } from "../../DataNode/DataNodeModel";
 import { VariableNodeModel } from "../../VariableNode/VariableNodeModel";
@@ -22,7 +22,7 @@ export interface ChatCompletionNodeOptions extends ParentNodeModelOptions {
 export class ChatCompletionNodeModel extends ParentNodeModel<ChatCompletionNodeOptions> {
     constructor(prompt_type: PromptType = PromptType.Assistant, model: ModelType = ModelType.GPT3) {
         super("tbl", {
-            type: 'chat completion',
+            type: NodeTypes.ChatCompletion,
             color: 'rgb(255, 140, 0)',
             prompt_type: prompt_type,
             model: model

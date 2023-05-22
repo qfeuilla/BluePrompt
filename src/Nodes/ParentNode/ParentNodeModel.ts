@@ -10,11 +10,22 @@ import {
 import { SimplePortModel } from "../../Port/SimplePortModel";
 import { VariableNodeModel } from "../VariableNode/VariableNodeModel";
 
+export enum NodeTypes {
+	Data = "data",
+	Parent = "parent",
+	Text2Var = "text to variable",
+  ChatCompletion = "chat completion",
+  Variable = "variable",
+  DefaultTransform = "default transform",
+  DefaultAPI = "default API"
+}
+
 export interface ParentNodeModelOptions extends BasePositionModelOptions {
   name?: string;
   color: string;
   width?: number;
   height?: number;
+  type?: NodeTypes;
   in_use_variables?: string[];
   port_map?: string;
   virtual_variables?: LinkModel<LinkModelGenerics>[];
@@ -31,7 +42,7 @@ export class ParentNodeModel<
 > extends NodeModel<ParentNodeModelGenerics<O>> {
   constructor(port_map: string, options?: O) {
     super({
-      type: "parent",
+      type: NodeTypes.Parent,
       name: "node_" + crypto.randomUUID(),
       color: "rgb(150,70,150)",
       in_use_variables: [],

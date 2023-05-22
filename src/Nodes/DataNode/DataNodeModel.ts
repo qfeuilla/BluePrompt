@@ -1,5 +1,5 @@
 import { DeserializeEvent } from "@projectstorm/react-diagrams";
-import { ParentNodeModel, ParentNodeModelOptions } from "../ParentNode/ParentNodeModel";
+import { NodeTypes, ParentNodeModel, ParentNodeModelOptions } from "../ParentNode/ParentNodeModel";
 import {Point} from "@projectstorm/geometry"
 import axios from "axios";
 import { VariableNodeModel } from "../VariableNode/VariableNodeModel";
@@ -19,7 +19,7 @@ export interface DataNodeOptions extends ParentNodeModelOptions {
 export class DataNodeModel extends ParentNodeModel<DataNodeOptions> {
     constructor(prompt_type: PromptType = PromptType.User) {
         super("ltb", {
-            type: 'data',
+            type: NodeTypes.Data,
             color: 'rgb(60,110,40)',
             prompt_type: prompt_type
         })

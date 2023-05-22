@@ -1,5 +1,5 @@
 import { DeserializeEvent } from "@projectstorm/react-diagrams";
-import { ParentNodeModel, ParentNodeModelOptions } from "../../ParentNode/ParentNodeModel";
+import { NodeTypes, ParentNodeModel, ParentNodeModelOptions } from "../../ParentNode/ParentNodeModel";
 import { VariableNodeModel } from "../../VariableNode/VariableNodeModel";
 
 export interface TextToVarNodeOptions extends ParentNodeModelOptions {
@@ -9,7 +9,7 @@ export interface TextToVarNodeOptions extends ParentNodeModelOptions {
 export class TextToVarNodeModel extends ParentNodeModel<TextToVarNodeOptions> {
     constructor(var_name: string) {
         super("lr", {
-            type: 'text to var',
+            type: NodeTypes.Text2Var,
             color: 'rgb(20,60,200)',
             var_name: var_name,
         })

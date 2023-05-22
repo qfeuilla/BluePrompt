@@ -1,5 +1,5 @@
 import { DeserializeEvent } from "@projectstorm/react-diagrams";
-import { ParentNodeModel, ParentNodeModelOptions } from "../ParentNode/ParentNodeModel";
+import { NodeTypes, ParentNodeModel, ParentNodeModelOptions } from "../ParentNode/ParentNodeModel";
 
 export interface VariableNodeOptions extends ParentNodeModelOptions {
     var_name: string;
@@ -12,7 +12,7 @@ export class VariableNodeModel extends ParentNodeModel<VariableNodeOptions> {
     // TODO: check that all the vars in the model have different names.
     constructor(var_name: string, choices: any[]) {
         super("r", {
-			type: 'variable',
+			type: NodeTypes.Variable,
 			color: 'rgb(40,40,110)',
             var_name: var_name,
             choices: choices,

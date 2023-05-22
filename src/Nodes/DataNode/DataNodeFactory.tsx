@@ -7,13 +7,14 @@ import {
 import { DataNodeModel, PromptType } from "./DataNodeModel";
 import { GlobalNodeWidget } from "../ParentNode/ParentNodeWidget";
 import { DataRenderContent, DataVisualProps } from "./DataNodeWidget";
+import { NodeTypes } from "../ParentNode/ParentNodeModel";
 
 export class DataNodeFactory extends AbstractReactFactory<
   DataNodeModel,
   DiagramEngine
 > {
   constructor() {
-    super("data");
+    super(NodeTypes.Data);
   }
 
   generateReactWidget(event: GenerateWidgetEvent<DataNodeModel>): JSX.Element {

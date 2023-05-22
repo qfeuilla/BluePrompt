@@ -2,6 +2,7 @@ import "./App.css";
 import createEngine, {
   CanvasWidget,
   DiagramModel,
+  LinkModel,
   PortModelAlignment,
 } from "@projectstorm/react-diagrams";
 // import { Point } from "@projectstorm/geometry";
@@ -19,7 +20,7 @@ import { TextToVarNodeFactory } from "./Nodes/TransformNodes/TextToVarNode/TextT
 import { TextToVarNodeModel } from "./Nodes/TransformNodes/TextToVarNode/TextToVarNodeModel";
 import { ChatCompletionNodeModel } from "./Nodes/APINodes/ChatCompletionNode/ChatCompletionNodeModel";
 import { ChatCompletionNodeFactory } from "./Nodes/APINodes/ChatCompletionNode/ChatCompletionNodeFactory";
-import { ParentNodeModel } from "./Nodes/ParentNode/ParentNodeModel";
+import { NodeTypes, ParentNodeModel } from "./Nodes/ParentNode/ParentNodeModel";
 import { useState } from "react";
 
 // TODO: prevent unliked link
@@ -164,53 +165,146 @@ function App() {
   };
 
   const AddChild = (prompt_type = PromptType.User, content?: string) => {
-    var selected_node = model.getSelectedEntities()[0] as ParentNodeModel;
+    var selected_node: ParentNodeModel =
+      model.getSelectedEntities()[0] as ParentNodeModel;
     if (!selected_node) {
       toast("You need to select a node", { type: "error" });
       return;
     }
-    var new_node;
+    var new_node: ParentNodeModel;
+    var link: LinkModel;
 
-    switch (selected_node_type) {
-      case "var":
-        new_node = new VariableNodeModel("", []);
-        break;
-      case "data":
-        new_node = new DataNodeModel(PromptType.System);
-        break;
-      case "chat":
-        new_node = new ChatCompletionNodeModel();
-        break;
-      case "t2var":
-        new_node = new TextToVarNodeModel("");
-        break;
+    if (content !== undefined) {
+      if (prompt_type !== PromptType.Assistant)
+        new_node = new DataNodeModel(PromptType.User);
+      else new_node = new ChatCompletionNodeModel(PromptType.Assistant);
+      new_node.setPosition(
+        selected_node.getX(),
+        selected_node.getY() + (selected_node.getOptions().height || 0) + 200
+      );
+      (new_node as DataNodeModel | ChatCompletionNodeModel).setContent(content);
+      link = (selected_node.bottomPort() as SimplePortModel).link(
+        new_node.topPort() as SimplePortModel
+      );
+    } else {
+      switch (selected_node_type) {
+        case NodeTypes.Variable:
+          if (selected_node.getOptions().type === NodeTypes.Variable) {
+            toast("you can't add a VariableNode as a child to a VariableNode", {
+              type: "error",
+            });
+            throw new Error(
+              "you can't add a VariableNode as a child to a VariableNode"
+            );
+          }
+          new_node = new VariableNodeModel("", []);
+          link = (new_node.rightPort() as SimplePortModel).link(
+            selected_node.leftPort() as SimplePortModel
+          );
+          new_node.setPosition(
+            selected_node.getX() - 300,
+            selected_node.getY()
+          );
+          break;
+        case NodeTypes.Data:
+          new_node = new DataNodeModel(PromptType.User);
+          if (
+            selected_node.getOptions().type === NodeTypes.Data ||
+            selected_node.getOptions().type === NodeTypes.ChatCompletion
+          ) {
+            link = (selected_node.bottomPort() as SimplePortModel).link(
+              new_node.topPort() as SimplePortModel
+            );
+            new_node.setPosition(
+              selected_node.getX(),
+              selected_node.getY() +
+                (selected_node.getOptions().height || 0) +
+                300
+            );
+          } else {
+            link = (selected_node.rightPort() as SimplePortModel).link(
+              new_node.leftPort() as SimplePortModel
+            );
+            new_node.setPosition(
+              selected_node.getX() + 300,
+              selected_node.getY()
+            );
+          }
+          break;
+        case NodeTypes.ChatCompletion:
+          new_node = new ChatCompletionNodeModel();
+          if (
+            selected_node.getOptions().type === NodeTypes.Data ||
+            selected_node.getOptions().type === NodeTypes.ChatCompletion
+          ) {
+            link = (selected_node.bottomPort() as SimplePortModel).link(
+              new_node.topPort() as SimplePortModel
+            );
+            new_node.setPosition(
+              selected_node.getX(),
+              selected_node.getY() +
+                (selected_node.getOptions().height || 0) +
+                300
+            );
+          } else {
+            link = (selected_node.rightPort() as SimplePortModel).link(
+              new_node.leftPort() as SimplePortModel
+            );
+            new_node.setPosition(
+              selected_node.getX() + 300,
+              selected_node.getY()
+            );
+          }
+          break;
+        case NodeTypes.Text2Var:
+          new_node = new TextToVarNodeModel("");
+          if (
+            selected_node.getOptions().type === NodeTypes.Data ||
+            selected_node.getOptions().type === NodeTypes.ChatCompletion
+          ) {
+            link = (selected_node.bottomPort() as SimplePortModel).link(
+              new_node.leftPort() as SimplePortModel
+            );
+            new_node.setPosition(
+              selected_node.getX() +
+                ((
+                  (selected_node as ChatCompletionNodeModel) || DataNodeModel
+                ).getOptions().content_sizes?.x || 0) +
+                300,
+              selected_node.getY()
+            );
+          } else {
+            link = (selected_node.rightPort() as SimplePortModel).link(
+              new_node.leftPort() as SimplePortModel
+            );
+            new_node.setPosition(
+              selected_node.getX() + 300,
+              selected_node.getY()
+            );
+          }
+          break;
+        default:
+          toast(`Can't add child, uncorrect type ${selected_node_type}`, {
+            type: "error",
+          });
+          throw new Error(
+            `Can't add child, uncorrect type ${selected_node_type}`
+          );
+      }
     }
 
-    if (prompt_type !== "assistant")
-      new_node = new DataNodeModel(PromptType.User);
-    else new_node = new ChatCompletionNodeModel(PromptType.Assistant);
-    new_node.setPosition(
-      selected_node.getX(),
-      selected_node.getY() + (selected_node.getOptions().height || 0) + 200
-    );
-    new_node.setContent(content || "");
-    var link = (selected_node.getPort("bottom") as SimplePortModel).link(
-      new_node.getPort("top") as SimplePortModel
-    );
+    // register connections
+    (link!.getTargetPort() as SimplePortModel).getOptions().connected += 1;
+    (link!.getSourcePort() as SimplePortModel).getOptions().connected += 1;
 
-    (
-      selected_node.getPort("bottom") as SimplePortModel
-    ).getOptions().connected += 1;
-    (new_node.getPort("top") as SimplePortModel).getOptions().connected += 1;
+    model.addAll(new_node, link!);
 
-    model.addAll(new_node, link);
     model.getSelectedEntities().forEach((element) => {
       element.setSelected(false);
     });
     new_node.setSelected(true);
     engine.repaintCanvas();
     console.log(selected_node);
-
     saveNowGraph();
     // autoDistribute();
   };
@@ -410,25 +504,30 @@ function App() {
   var _mouseX = 0;
   var _mouseY = 0;
 
-  var selected_node_type = "var";
+  var selected_node_type: NodeTypes = NodeTypes.Variable;
 
   const handleKeyPress = (e: KeyboardEvent) => {
     if (e.key === "a" && e.ctrlKey) {
       e.preventDefault();
       switch (selected_node_type) {
-        case "var":
+        case NodeTypes.Variable:
           AddVarNode(_mouseX, _mouseY);
           break;
-        case "data":
+        case NodeTypes.Data:
           AddDataNode(_mouseX, _mouseY);
           break;
-        case "chat":
+        case NodeTypes.ChatCompletion:
           AddAPINode(_mouseX, _mouseY);
           break;
-        case "t2var":
+        case NodeTypes.Text2Var:
           AddTransformNode(_mouseX, _mouseY);
           break;
       }
+      e.stopPropagation();
+    }
+    if (e.key === "p" && e.ctrlKey) {
+      e.preventDefault();
+      AddChild();
       e.stopPropagation();
     }
 
@@ -473,38 +572,14 @@ function App() {
             height: "100%",
           }}
           onChange={(e) => {
-            selected_node_type = e.currentTarget.value;
+            selected_node_type = e.currentTarget.value as NodeTypes;
           }}
         >
-          <option value={"var"}>Variable node</option>
-          <option value={"data"}>Data node</option>
-          <option value={"chat"}>Chat GPT node</option>
-          <option value={"t2var"}>TextToVariable node</option>
+          <option value={NodeTypes.Variable}>Variable node</option>
+          <option value={NodeTypes.Data}>Data node</option>
+          <option value={NodeTypes.ChatCompletion}>Chat GPT node</option>
+          <option value={NodeTypes.Text2Var}>TextToVariable node</option>
         </select>
-        <input
-          type="button"
-          onClick={(e) => {
-            console.log(selected_node_type);
-            switch (selected_node_type) {
-              case "var":
-                AddVarNode(0, 0);
-                break;
-              case "data":
-                AddDataNode(0, 0);
-                break;
-              case "chat":
-                AddAPINode(0, 0);
-                break;
-              case "t2var":
-                AddTransformNode(0, 0);
-                break;
-            }
-          }}
-          value={"new node"}
-          style={{
-            height: "100%",
-          }}
-        />
       </div>
       <input
         type="button"
