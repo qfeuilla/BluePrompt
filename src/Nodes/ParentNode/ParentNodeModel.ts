@@ -261,11 +261,43 @@ export class ParentNodeModel<
     }
   }
 
+  async _onSkip(
+    flow_data: { type: string; data: any }[],
+    currentGen: { [param_name: string]: number },
+    previous_skip: number | undefined,
+  ): Promise<number | undefined> {
+    if (this.onSkip) {
+      return await this.onSkip(
+        flow_data,
+        currentGen,
+        this.getChildren(),
+        this.getAttachedVariableNodes(),
+        previous_skip
+      );
+    } else {
+      console.error(
+        "You need to implement the onSkip function for node: " +
+          this.options.name +
+          " of type " +
+          this.options.type
+      );
+      process.exit();
+    }
+  }
+
   async execute?(
     flow_data: { type: string; data: any }[],
     currentGen: { [param_name: string]: number },
     next_nodes: ParentNodeModel[],
     variables: VariableNodeModel[]
+  ): Promise<number | undefined>;
+
+  async onSkip?(
+    flow_data: { type: string; data: any }[],
+    currentGen: { [param_name: string]: number },
+    next_nodes: ParentNodeModel[],
+    variables: VariableNodeModel[],
+    previous_skip: number | undefined,
   ): Promise<number | undefined>;
 
   // TODO: Fork flow for data node and select flow for function nodes
@@ -301,18 +333,38 @@ export class ParentNodeModel<
     }
 
     toFlowToNodes.forEach((node: ParentNodeModel) => {
+      // Check wether some previous data might be erased
+      // If yes, then pass the previous data instead 
       var tag: string = node.getTag(current_gen);
-      const to_save_data = Object.keys(cache).includes(tag)
+      var to_save_data = Object.keys(cache).includes(tag)
         ? cache[tag]["flow_data"]
         : current_flow_data;
+      var to_save_skip = Object.keys(cache).includes(tag)
+        ? cache[tag]["skip"]
+        : -1;
+      
       this.options.in_use_variables!.forEach((variable: string) => {
-        node.getOptions().in_use_variables!.push(variable);
+        if (!node.getOptions().in_use_variables!.includes(variable))
+          node.getOptions().in_use_variables!.push(variable);
       });
+
+
+      // Check wether the actual next step have also already
+      // been cached. If yes then keep this 
       tag = node.getTag(current_gen);
 
+      to_save_data = Object.keys(cache).includes(tag)
+        ? cache[tag]["flow_data"]
+        : to_save_data;
+      to_save_skip = Object.keys(cache).includes(tag)
+        ? cache[tag]["skip"]
+        : to_save_skip;
+
+      // If the top flow has already been computed
       if (!node.waitTopFlow()) {
-        cache[tag] = { flow_data: structuredClone(to_save_data), skip: -1 };
+        cache[tag] = { flow_data: structuredClone(to_save_data), skip: to_save_skip };
       }
+
       if (!node.waitLeftFlow() && !node.waitTopFlow()) {
         current_nodes.unshift(node);
       }

@@ -337,7 +337,7 @@ function App() {
     while (true) {
       current_generation_it = variable_generator.next();
 
-      // reset all currently used var, contents and virutal varws
+      // reset all currently used var, contents and virutal vars
       (model.getNodes() as ParentNodeModel[]).forEach(
         (node: ParentNodeModel) => {
           node.resetUsedVariable();
@@ -399,6 +399,8 @@ function App() {
             break;
           }
           cache[tag] = { flow_data: structuredClone(flow_data), skip: skip };
+        } else {
+          current_node._onSkip(flow_data, current_generation, skip);
         }
         if (current_node.isLeaf()) graph_heads.splice(0, 1);
         else {

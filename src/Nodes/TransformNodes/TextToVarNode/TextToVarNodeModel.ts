@@ -29,15 +29,37 @@ export class TextToVarNodeModel extends ParentNodeModel<TextToVarNodeOptions> {
 
     execute(flow_data: { type: string; data: any; }[], currentGen: { [param_name: string]: number; }, next_nodes: ParentNodeModel<ParentNodeModelOptions>[], variables: VariableNodeModel[]): Promise<number> {
         const choosen_next_node = 0;
+        const current_content = flow_data.slice(-1)[0].data.content;
 
-        next_nodes[choosen_next_node].addVirtualVariableNode(this.getOptions().var_name, [flow_data.slice(-1)[0].data.content])
+        next_nodes[choosen_next_node].addVirtualVariableNode(this.getOptions().var_name, [current_content])
         currentGen[this.getOptions().var_name] = 0;
 
         this.addInUseVariable(this.getOptions().var_name);
 
         flow_data.splice(0, flow_data.length);
+        flow_data.push({
+            type: NodeTypes.Text2Var as string,
+            data: current_content,
+        })
 
-        return Promise.resolve(0);
+        return Promise.resolve(choosen_next_node);
+    }
+
+    onSkip(flow_data: { type: string; data: any; }[], currentGen: { [param_name: string]: number; }, next_nodes: ParentNodeModel<ParentNodeModelOptions>[], variables: VariableNodeModel[], previous_skip: number | undefined): Promise<number | undefined> {
+        const choosen_next_node = 0;
+        const current_content = flow_data.slice(-1)[0].data;
+
+        next_nodes[choosen_next_node].addVirtualVariableNode(this.getOptions().var_name, [current_content])
+        currentGen[this.getOptions().var_name] = 0;
+
+        this.addInUseVariable(this.getOptions().var_name);
+        flow_data.splice(0, flow_data.length);
+        flow_data.push({
+            type: NodeTypes.Text2Var as string,
+            data: current_content,
+        })
+
+        return Promise.resolve(choosen_next_node);
     }
 
 

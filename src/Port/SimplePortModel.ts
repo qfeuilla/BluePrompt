@@ -9,13 +9,13 @@ import {
   LinkModelGenerics,
 } from "@projectstorm/react-diagrams";
 import { ArrowedLinkModel } from "../ArrowedLink/ArrowedLinkModel";
-import { VariableNodeModel } from "../Nodes/VariableNode/VariableNodeModel";
 
 export interface SimplePortModelOptions extends PortModelOptions {
   flow_in: boolean; // Wether the port is a flow_in or a flow_out
   connected: number; // Number of connections
   resolved: number; // Number of connections resolved (if resolved < connected when flowing, then stop flowing and wait for other flows)
   type?: string;
+  solved_now: boolean; // track wether the connection was resolved by the current flow
 }
 
 export interface SimplePortModelGenerics extends PortModelGenerics {
@@ -31,6 +31,7 @@ export class SimplePortModel extends PortModel<SimplePortModelGenerics> {
       flow_in: alignment === "top" || alignment === "left",
       connected: 0,
       resolved: 0,
+      solved_now: false,
     });
   }
 

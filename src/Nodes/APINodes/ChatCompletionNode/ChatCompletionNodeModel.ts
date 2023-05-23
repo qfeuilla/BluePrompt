@@ -80,6 +80,12 @@ export class ChatCompletionNodeModel extends ParentNodeModel<ChatCompletionNodeO
         return undefined;
     }
 
+    onSkip(flow_data: { type: string; data: any; }[], currentGen: { [param_name: string]: number; }, next_nodes: ParentNodeModel<ParentNodeModelOptions>[], variables: VariableNodeModel[], previous_skip: number | undefined): Promise<number | undefined> {
+        this.getOptions().content = flow_data.slice(-1)[0].data.content;
+
+        return Promise.resolve(previous_skip);
+    }
+
     resetGraph() {
         this.getOptions().content = "";
     }
