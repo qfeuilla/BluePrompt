@@ -9,6 +9,7 @@ import {
   LinkModelGenerics,
 } from "@projectstorm/react-diagrams";
 import { ArrowedLinkModel } from "../ArrowedLink/ArrowedLinkModel";
+import { VariableNodeModel } from "../Nodes/VariableNode/VariableNodeModel";
 
 export interface SimplePortModelOptions extends PortModelOptions {
   flow_in: boolean; // Wether the port is a flow_in or a flow_out
@@ -99,6 +100,8 @@ export class SimplePortModel extends PortModel<SimplePortModelGenerics> {
 
   removeLink(link: LinkModel<LinkModelGenerics>): void {
       super.removeLink(link);
+      if (this.getParent().getType() === "variable" && (this.getParent() as VariableNodeModel).getOptions().shadow)
+        return
       this.getOptions().connected -= 1;
   }
 

@@ -6,17 +6,19 @@ export interface VariableNodeOptions extends ParentNodeModelOptions {
     choices: any[];
     selected_choice?: number;
     newVar: string;
+    shadow: boolean;
 }
 
 export class VariableNodeModel extends ParentNodeModel<VariableNodeOptions> {
     // TODO: check that all the vars in the model have different names.
-    constructor(var_name: string, choices: any[]) {
+    constructor(var_name: string, choices: any[], shadow: boolean = false) {
         super("r", {
 			type: NodeTypes.Variable,
 			color: 'rgb(40,40,110)',
             var_name: var_name,
             choices: choices,
             newVar: "",
+            shadow: shadow
 		});
     }
 
@@ -26,7 +28,8 @@ export class VariableNodeModel extends ParentNodeModel<VariableNodeOptions> {
             var_name: this.options.var_name,
             choices: this.options.choices,
             selected_choice: this.options.selected_choice,
-            newVar: this.options.newVar
+            newVar: this.options.newVar,
+            shadow: this.options.shadow
         }
     }
 
@@ -36,6 +39,7 @@ export class VariableNodeModel extends ParentNodeModel<VariableNodeOptions> {
         this.options.choices = event.data.choices;
         this.options.selected_choice = event.data.selected_choice;
         this.options.newVar = event.data.newVar;
+        this.options.shadow = event.data.shadow;
     }
 
     updateVarName(var_name: string) {

@@ -35,6 +35,7 @@ export class ChatCompletionNodeModel extends ParentNodeModel<ChatCompletionNodeO
             content: this.options.content,
             content_sizes: this.options.content_sizes,
             prompt_type: this.options.prompt_type,
+            model: this.options.model
         }
     }
 
@@ -43,6 +44,7 @@ export class ChatCompletionNodeModel extends ParentNodeModel<ChatCompletionNodeO
         this.options.content = event.data.content;
         this.options.content_sizes = event.data.content_sizes;
         this.options.prompt_type = event.data.prompt_type;
+        this.options.model = event.data.model
     }
 
     async execute(flow_data: { type: string; data: any; }[], currentGen: { [param_name: string]: number; }, next_nodes: ParentNodeModel<ParentNodeModelOptions>[], variables: VariableNodeModel[]): Promise<number | undefined> {

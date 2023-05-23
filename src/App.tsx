@@ -94,42 +94,6 @@ function App() {
   engine.getNodeFactories().registerFactory(new ChatCompletionNodeFactory());
   engine.getLinkFactories().registerFactory(new ArrowedLinkFactory());
 
-  // var dagre_engine = new DagreEngine({
-  //   graph: {
-  //     rankdir: "TD",
-  //     ranker: "shortest-path",
-  //     marginx: 50,
-  //     marginy: 50,
-  //   },
-  //   includeLinks: true,
-  //   nodeMargin: 50,
-  // });
-
-  // const reroute = () => {
-  //   engine
-  //     .getLinkFactories()
-  //     .getFactory<PathFindingLinkFactory>(PathFindingLinkFactory.NAME)
-  //     .calculateRoutingMatrix();
-  // };
-
-  // const autoDistribute = () => {
-  //   /*setTimeout(() => {
-  //     dagre_engine.redistribute(model);
-
-  //     reroute();
-  //     engine.repaintCanvas();
-  //   }, 1000);*/
-  // };
-
-  // const autoRefreshLinks = () => {
-  //   /*setTimeout(() => {
-  //     dagre_engine.refreshLinks(model);
-
-  //     reroute();
-  //     engine.repaintCanvas();
-  //   }, 1000);*/
-  // };
-
   var model = new DiagramModel();
 
   const AddVarNode = (mouseX: number, mouseY: number) => {
