@@ -133,8 +133,14 @@ export class ParentNodeModel<
 
   addVirtualVariableNode(var_name: string, choices: string[]) {
     if (this.leftPort()) {
-      const to_attach = new VariableNodeModel(var_name, choices, true);
+      const to_attach = new VariableNodeModel(var_name, choices);
       const link = to_attach.rightPort()!.link(this.leftPort()!);
+
+      // When erasing this variable node, it do connected -1 so this is necessary
+      (link.getSourcePort()! as SimplePortModel).getOptions().connected += 1;
+      (link.getSourcePort()! as SimplePortModel).getOptions().resolved += 1;
+      (link.getTargetPort()! as SimplePortModel).getOptions().connected += 1;
+      (link.getTargetPort()! as SimplePortModel).getOptions().resolved += 1;
 
       this.getOptions().virtual_variables?.push(link);
     }

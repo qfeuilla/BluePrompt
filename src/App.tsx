@@ -505,7 +505,19 @@ function App() {
   };
 
   document.addEventListener("keydown", handleKeyPress);
+  window.addEventListener("beforeunload", (ev) => {
+    // reset all currently used var, contents and virutal varws
+    (model.getNodes() as ParentNodeModel[]).forEach((node: ParentNodeModel) => {
+      node.resetUsedVariable();
+      node.leftPort()?.resetResolved();
+      node.topPort()?.resetResolved();
+      node.bottomPort()?.resetResolved();
+      node.rightPort()?.resetResolved();
+      node._resetGraph();
+    });
 
+    saveNowGraph();
+  });
   return (
     <div
       className="App"

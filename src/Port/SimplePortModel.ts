@@ -38,7 +38,6 @@ export class SimplePortModel extends PortModel<SimplePortModelGenerics> {
     super.deserialize(event);
     this.options.flow_in = event.data.flow_in;
     this.options.connected = event.data.connected;
-    this.options.resolved = event.data.resolved;
   }
 
   serialize() {
@@ -46,7 +45,6 @@ export class SimplePortModel extends PortModel<SimplePortModelGenerics> {
       ...super.serialize(),
       flow_in: this.options.flow_in,
       connected: this.options.connected,
-      resolved: this.options.resolved,
     };
   }
 
@@ -77,15 +75,16 @@ export class SimplePortModel extends PortModel<SimplePortModelGenerics> {
       return false;
 
     if (this.getParent().getOptions().type === "variable") {
-      if (port.getOptions().alignment === "top")
-        return false;
+      if (port.getOptions().alignment === "top") return false;
     }
 
     if (this.getParent().getOptions().type === "data") {
-      if (port.getOptions().alignment === "left" && port.getOptions().type === "data")
+      if (
+        port.getOptions().alignment === "left" &&
+        port.getOptions().type === "data"
+      )
         return false;
     }
-
 
     const res = super.canLinkToPort(port);
     if (res) {
@@ -99,24 +98,22 @@ export class SimplePortModel extends PortModel<SimplePortModelGenerics> {
   }
 
   removeLink(link: LinkModel<LinkModelGenerics>): void {
-      super.removeLink(link);
-      if (this.getParent().getType() === "variable" && (this.getParent() as VariableNodeModel).getOptions().shadow)
-        return
-      this.getOptions().connected -= 1;
+    super.removeLink(link);
+    this.getOptions().connected -= 1;
   }
 
   listLinks(): LinkModel<LinkModelGenerics>[] {
-    var _links : LinkModel<LinkModelGenerics>[] = [];
+    var _links: LinkModel<LinkModelGenerics>[] = [];
     Object.keys(this.getLinks()).forEach((id: string) => {
       _links.push(this.getLinks()[id]);
-    })
+    });
     return _links;
   }
 
   isResolved(): boolean {
     return this.getOptions().resolved >= this.getOptions().connected;
   }
-  
+
   resetResolved(): void {
     this.getOptions().resolved = 0;
   }
