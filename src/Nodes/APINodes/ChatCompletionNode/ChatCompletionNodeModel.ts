@@ -17,6 +17,7 @@ export interface ChatCompletionNodeOptions extends ParentNodeModelOptions {
     content_sizes?: Point;
     prompt_type?: PromptType;
     model?: ModelType;
+    temperature: number;
 }
 
 export class ChatCompletionNodeModel extends ParentNodeModel<ChatCompletionNodeOptions> {
@@ -25,7 +26,8 @@ export class ChatCompletionNodeModel extends ParentNodeModel<ChatCompletionNodeO
             type: NodeTypes.ChatCompletion,
             color: 'rgb(255, 140, 0)',
             prompt_type: prompt_type,
-            model: model
+            model: model,
+            temperature: 0.85
         }) 
     }
 
@@ -35,7 +37,8 @@ export class ChatCompletionNodeModel extends ParentNodeModel<ChatCompletionNodeO
             content: this.options.content,
             content_sizes: this.options.content_sizes,
             prompt_type: this.options.prompt_type,
-            model: this.options.model
+            model: this.options.model,
+            temperature: this.options.temperature
         }
     }
 
@@ -45,6 +48,7 @@ export class ChatCompletionNodeModel extends ParentNodeModel<ChatCompletionNodeO
         this.options.content_sizes = event.data.content_sizes;
         this.options.prompt_type = event.data.prompt_type;
         this.options.model = event.data.model
+        this.options.temperature = event.data.temperature
     }
 
     async execute(flow_data: { type: string; data: any; }[], currentGen: { [param_name: string]: number; }, next_nodes: ParentNodeModel<ParentNodeModelOptions>[], variables: VariableNodeModel[]): Promise<number | undefined> {
@@ -63,7 +67,8 @@ export class ChatCompletionNodeModel extends ParentNodeModel<ChatCompletionNodeO
 
         const completion = (await axios.post("http://localhost:5000/complete", {
             messages: messagePath,
-            model: this.getOptions().model
+            model: this.getOptions().model,
+            temperature: this.getOptions().temperature
         }).catch((error : AxiosError) => {
             throw new Error(JSON.stringify(error.toJSON()))
         })).data["response"];
@@ -104,5 +109,9 @@ export class ChatCompletionNodeModel extends ParentNodeModel<ChatCompletionNodeO
 
     setModel(model: ModelType) {
         this.options.model = model;
+    }
+
+    setTemperature(temp: string) {
+        this.options.temperature = +temp;
     }
 }

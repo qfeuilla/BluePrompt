@@ -75,7 +75,7 @@ def complete():
             node.parent = prev_node
         prev_node = node
 
-    child = prev_node.complete(model=request.json["model"])
+    child = prev_node.complete(model=request.json["model"], temperature=request.json["temperature"])
     return {"response": child.content}
 
 @app.route("/load_graph", methods=['POST'])

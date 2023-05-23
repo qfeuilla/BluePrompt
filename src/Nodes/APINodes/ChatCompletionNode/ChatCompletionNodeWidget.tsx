@@ -44,6 +44,22 @@ export class ChatCompletionRenderContent extends React.Component<
             <option value={ModelType.GPT4}>gpt4</option>
             <option value={ModelType.GPT4_32k}>gpt4 32k</option>
           </select>
+          <input
+            onKeyDown={(e) => {
+              e.stopPropagation();
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+            }}
+            type="text"
+            defaultValue={this.props.node.getOptions().temperature}
+            onChange={(e) => {
+              this.props.node.setTemperature(e.currentTarget.value);
+            }}
+          />
         </div>
 
         <div style={{ margin: 5 }}>
