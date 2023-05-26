@@ -137,6 +137,11 @@ function App() {
     };
   } = {};
 
+  var running: number = 0;
+  var total_experiments: number = 0;
+  var stop = false;
+  var kill = false;
+
   engine
     .getPortFactories()
     .registerFactory(
@@ -380,17 +385,27 @@ function App() {
   };
 
   const RunGraph = async () => {
+    document.getElementById("toolbar")!.hidden = true;
+    document.getElementById("experiment_bar")!.hidden = false;
     var cache: {
       [tag: string]: {
         flow_data: { type: string; data: any }[];
         skip?: number;
       };
     } = {};
+
+    total_experiments = 1;
+
     const var_nodes = (model.getNodes() as ParentNodeModel[]).filter(
       (node: ParentNodeModel) => {
         return node.getOptions().type === "variable";
       }
     ) as VariableNodeModel[];
+
+    var_nodes.forEach((node: VariableNodeModel) => {
+      total_experiments *= node.getOptions().choices.length;
+    });
+
     const variable_generator = generateAllCombinations(var_nodes);
 
     if (var_nodes.length < 1) {
@@ -415,6 +430,7 @@ function App() {
     } = { collections: [] };
 
     while (true) {
+      running += 1;
       current_generation_it = variable_generator.next();
 
       if (var_nodes.length > 0) {
@@ -436,7 +452,7 @@ function App() {
 
       engine.repaintCanvas();
 
-      if (current_generation_it.done) break;
+      if (current_generation_it.done || kill || stop) break;
       if (fail_in_row >= 3) {
         toast(
           "Please review the toasted error (you can also access them logged in the terminal), the graph is now stopped with your previous result saved",
@@ -469,7 +485,7 @@ function App() {
       }
 
       while (graph_heads.length) {
-        console.log(graph_heads);
+        if (kill) break;
         current_node = graph_heads[0];
         current_node.updateCurrentlyUsedVariable();
         tag = current_node.getTag(current_generation);
@@ -518,7 +534,12 @@ function App() {
       }
       engine.repaintCanvas();
     }
+    running = 0;
+    kill = false;
+    stop = false;
     engine.repaintCanvas();
+    document.getElementById("toolbar")!.hidden = false;
+    document.getElementById("experiment_bar")!.hidden = true;
   };
 
   const completePath = async () => {
@@ -632,78 +653,111 @@ function App() {
       }}
     >
       <ToastContainer />
-      <div
-        style={{
-          width: "15%",
-          height: "4vh",
-          padding: 0,
-          display: "inline-block",
-        }}
-      >
-        <SavesComponent onChange={ChangeSelectedGraph} onCreate={CreateGraph} />
-      </div>
-      <div
-        style={{
-          width: "15%",
-          height: "4vh",
-          padding: 0,
-          display: "inline-block",
-        }}
-      >
-        <select
+      <div id="toolbar">
+        <div>
+          <div
+            style={{
+              width: "15%",
+              height: "4vh",
+              padding: 0,
+              display: "inline-block",
+            }}
+          >
+            <SavesComponent
+              onChange={ChangeSelectedGraph}
+              onCreate={CreateGraph}
+            />
+          </div>
+          <div
+            style={{
+              width: "15%",
+              height: "4vh",
+              padding: 0,
+              display: "inline-block",
+            }}
+          >
+            <select
+              style={{
+                textAlign: "center",
+                width: "90%",
+                height: "100%",
+              }}
+              onChange={(e) => {
+                selected_node_type = e.currentTarget.value as NodeTypes;
+              }}
+            >
+              <option value={NodeTypes.Variable}>Variable node</option>
+              <option value={NodeTypes.Data}>Data node</option>
+              <option value={NodeTypes.ChatCompletion}>Chat GPT node</option>
+              <option value={NodeTypes.Text2Var}>TextToVariable node</option>
+            </select>
+          </div>
+          <input
+            type="button"
+            onClick={() => {
+              AddChild();
+            }}
+            value={"add child"}
+            style={{ width: "10%", height: "5vh" }}
+          />
+          <input
+            type="button"
+            onClick={saveNowGraph}
+            value={"save graph"}
+            style={{ width: "10%", height: "5vh" }}
+          />
+          <input
+            type="button"
+            onClick={() => loadGraph(current_graph)}
+            value={"load graph"}
+            style={{ width: "10%", height: "5vh" }}
+          />
+          <input
+            type="button"
+            onClick={completePath}
+            value={"Complete"}
+            style={{ width: "10%", height: "5vh" }}
+          />
+          <input
+            type="button"
+            onClick={clearGraph}
+            value={"clear graph"}
+            style={{ width: "5%", height: "5vh", background: "red" }}
+          />
+        </div>
+        <input
+          type="button"
+          onClick={RunGraph}
+          value={"Run Graph"}
           style={{
-            textAlign: "center",
-            width: "90%",
-            height: "100%",
+            width: 250,
+            height: "5vh",
+            background: "greenyellow",
+            marginTop: 10,
+            marginLeft: -125,
+            position: "absolute",
+            zIndex: 1000,
           }}
-          onChange={(e) => {
-            selected_node_type = e.currentTarget.value as NodeTypes;
-          }}
-        >
-          <option value={NodeTypes.Variable}>Variable node</option>
-          <option value={NodeTypes.Data}>Data node</option>
-          <option value={NodeTypes.ChatCompletion}>Chat GPT node</option>
-          <option value={NodeTypes.Text2Var}>TextToVariable node</option>
-        </select>
+        />
       </div>
-      <input
-        type="button"
-        onClick={() => {
-          AddChild();
-        }}
-        value={"add child"}
-        style={{ width: "10%", height: "5vh" }}
-      />
-      <input
-        type="button"
-        onClick={saveNowGraph}
-        value={"save graph"}
-        style={{ width: "10%", height: "5vh" }}
-      />
-      <input
-        type="button"
-        onClick={() => loadGraph(current_graph)}
-        value={"load graph"}
-        style={{ width: "10%", height: "5vh" }}
-      />
-      <input
-        type="button"
-        onClick={completePath}
-        value={"Complete"}
-        style={{ width: "10%", height: "5vh" }}
-      />
-      <input
-        type="button"
-        onClick={RunGraph}
-        value={"Run Graph"}
-        style={{ width: "10%", height: "5vh" }}
-      />
-      <input
-        type="button"
-        onClick={clearGraph}
-        value={"clear graph"}
-        style={{ width: "5%", height: "5vh", background: "red" }}
-      />
+      <div hidden id="experiment_bar">
+        <input
+          type="button"
+          onClick={() => {
+            kill = true;
+          }}
+          value={"KILL"}
+          style={{ width: "30%", height: "5vh", background: "red" }}
+        />
+        <input
+          type="button"
+          onClick={() => {
+            stop = true;
+          }}
+          value={"clean stop"}
+          style={{ width: "30%", height: "5vh", background: "orange" }}
+        />
+      </div>
       <div id="application" className="canvas" style={{ height: "95vh" }}>
         <CanvasWidget engine={engine} />
       </div>
