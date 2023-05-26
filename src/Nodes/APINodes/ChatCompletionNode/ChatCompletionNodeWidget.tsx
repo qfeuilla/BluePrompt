@@ -45,6 +45,10 @@ export class ChatCompletionRenderContent extends React.Component<
             <option value={ModelType.GPT4_32k}>gpt4 32k</option>
           </select>
           <input
+            style={{
+              textAlign: "end",
+              width: "10%",
+            }}
             onKeyDown={(e) => {
               e.stopPropagation();
             }}

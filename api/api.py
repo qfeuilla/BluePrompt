@@ -65,6 +65,7 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 
 @app.route('/complete', methods=['POST'])
 def complete():
+    request.get_json(force=True)
     messages = request.json['messages']
     prev_node = None
     
@@ -82,7 +83,9 @@ def complete():
 def load_graph():
     request.get_json(force=True)
     path = request.json["path"]
+    save_Lock.acquire(True)
     data = json.load(open(path, "r+"))
+    save_Lock.release()
     return data
 
 @app.route("/save_graph", methods=['POST'])
@@ -94,6 +97,12 @@ def save_graph():
     json.dump(content, open(path, "w+"), indent=4)
     save_Lock.release()
     return {"status": "done"}
+
+@app.route("/list_saves", methods=['POST'])
+def list_saves():
+    request.get_json(force=True)
+    paths = [i.split(".")[0] for i in os.listdir("../saves/")]
+    return {"paths": paths}
 
 if __name__ == '__main__':
     app.run(debug=True)

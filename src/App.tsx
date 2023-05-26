@@ -22,6 +22,7 @@ import { ChatCompletionNodeModel } from "./Nodes/APINodes/ChatCompletionNode/Cha
 import { ChatCompletionNodeFactory } from "./Nodes/APINodes/ChatCompletionNode/ChatCompletionNodeFactory";
 import { NodeTypes, ParentNodeModel } from "./Nodes/ParentNode/ParentNodeModel";
 import { useState } from "react";
+import CreatableSelect from "react-select/creatable";
 
 // TODO: prevent unliked link
 // TODO: delete link
@@ -75,10 +76,60 @@ function* generateAllCombinations(variable_nodes: VariableNodeModel[]) {
     }
   }
 }
+interface Option {
+  readonly label: string;
+  readonly value: string;
+}
+
+const createOption = (label: string) => ({
+  label,
+  value: label.toLowerCase().replace(/\W/g, ""),
+});
+
+function SavesComponent(props) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [options, setOptions] = useState<Option[]>([]);
+  const [value, setValue] = useState<Option | null>();
+
+  const handleCreate = (inputValue: string) => {
+    setIsLoading(true);
+    const newOption = createOption(inputValue);
+    setIsLoading(false);
+    setOptions((prev) => [...prev, newOption]);
+    props.onCreate(inputValue);
+    props.onChange(inputValue);
+    setValue(newOption);
+  };
+
+  const listSaves = async () => {
+    setIsLoading(true);
+    setOptions([]);
+    (
+      (await axios.post("http://localhost:5000/list_saves", {})).data[
+        "paths"
+      ] as string[]
+    ).forEach((path: string) => {
+      setOptions((prev) => [...prev, createOption(path)]);
+    });
+    setIsLoading(false);
+  };
+
+  return (
+    <CreatableSelect
+      onFocus={listSaves}
+      isLoading={isLoading}
+      onChange={(newValue) => props.onChange(newValue!.label)}
+      onCreateOption={handleCreate}
+      options={options}
+      defaultValue={{ label: "default", value: "default" }}
+      value={value}
+    />
+  );
+}
 
 function App() {
-  var current_graph_name = useState("default");
   var engine = createEngine();
+  var current_graph = "default";
 
   engine
     .getPortFactories()
@@ -95,6 +146,21 @@ function App() {
   engine.getLinkFactories().registerFactory(new ArrowedLinkFactory());
 
   var model = new DiagramModel();
+
+  const ChangeSelectedGraph = (selected_graph: string) => {
+    current_graph = selected_graph;
+    console.log(current_graph);
+    loadGraph(current_graph);
+  };
+
+  const CreateGraph = (new_graph: string) => {
+    current_graph = new_graph;
+    model = new DiagramModel();
+    engine.setModel(model);
+    engine.repaintCanvas();
+    saveNowGraph();
+    engine.repaintCanvas();
+  };
 
   const AddVarNode = (mouseX: number, mouseY: number) => {
     const new_node = new VariableNodeModel("", []);
@@ -277,15 +343,15 @@ function App() {
     // TODO: unlock every nodes
 
     axios.post("http://localhost:5000/save_graph", {
-      path: "../saves/default.json",
+      path: `../saves/${current_graph}.json`,
       content: model.serialize(),
     });
   };
 
-  const loadGraph = async () => {
+  const loadGraph = async (name: string) => {
     var data = (
       await axios.post("http://localhost:5000/load_graph", {
-        path: "../saves/default.json",
+        path: `../saves/${name}.json`,
       })
     ).data;
 
@@ -465,7 +531,7 @@ function App() {
   };
 
   engine.setModel(model);
-  loadGraph();
+  loadGraph(current_graph);
 
   var _mouseX = 0;
   var _mouseY = 0;
@@ -537,7 +603,17 @@ function App() {
       <ToastContainer />
       <div
         style={{
-          width: "20%",
+          width: "15%",
+          height: "4vh",
+          padding: 0,
+          display: "inline-block",
+        }}
+      >
+        <SavesComponent onChange={ChangeSelectedGraph} onCreate={CreateGraph} />
+      </div>
+      <div
+        style={{
+          width: "15%",
           height: "4vh",
           padding: 0,
           display: "inline-block",
@@ -546,7 +622,7 @@ function App() {
         <select
           style={{
             textAlign: "center",
-            width: "60%",
+            width: "90%",
             height: "100%",
           }}
           onChange={(e) => {
@@ -575,7 +651,7 @@ function App() {
       />
       <input
         type="button"
-        onClick={loadGraph}
+        onClick={() => loadGraph(current_graph)}
         value={"load graph"}
         style={{ width: "10%", height: "5vh" }}
       />
