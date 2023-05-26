@@ -130,6 +130,12 @@ function SavesComponent(props) {
 function App() {
   var engine = createEngine();
   var current_graph = "default";
+  var chat_cache: {
+    [tag: string]: {
+      flow_data: { type: string; data: any }[];
+      skip?: number;
+    };
+  } = {};
 
   engine
     .getPortFactories()
@@ -223,9 +229,7 @@ function App() {
             toast("you can't add a VariableNode as a child to a VariableNode", {
               type: "error",
             });
-            throw new Error(
-              "you can't add a VariableNode as a child to a VariableNode"
-            );
+            return;
           }
           new_node = new VariableNodeModel("", []);
           link = (new_node.rightPort() as SimplePortModel).link(
@@ -389,6 +393,10 @@ function App() {
     ) as VariableNodeModel[];
     const variable_generator = generateAllCombinations(var_nodes);
 
+    if (var_nodes.length < 1) {
+      cache = chat_cache;
+    }
+
     var flow_data: { type: string; data: any }[] = [];
     var skip: number | undefined;
     var current_generation_it;
@@ -403,17 +411,21 @@ function App() {
     while (true) {
       current_generation_it = variable_generator.next();
 
-      // reset all currently used var, contents and virutal vars
-      (model.getNodes() as ParentNodeModel[]).forEach(
-        (node: ParentNodeModel) => {
-          node.resetUsedVariable();
-          node.leftPort()?.resetResolved();
-          node.topPort()?.resetResolved();
-          node.bottomPort()?.resetResolved();
-          node.rightPort()?.resetResolved();
-          node._resetGraph();
-        }
-      );
+      if (var_nodes.length > 0) {
+        // reset all currently used var, contents and virutal vars
+        (model.getNodes() as ParentNodeModel[]).forEach(
+          (node: ParentNodeModel) => {
+            node.resetUsedVariable();
+            node.leftPort()?.resetResolved();
+            node.topPort()?.resetResolved();
+            node.bottomPort()?.resetResolved();
+            node.rightPort()?.resetResolved();
+            node._resetGraph();
+          }
+        );
+      } else {
+        chat_cache = cache;
+      }
 
       engine.repaintCanvas();
 
