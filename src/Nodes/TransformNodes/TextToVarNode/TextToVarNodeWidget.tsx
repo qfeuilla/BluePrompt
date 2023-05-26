@@ -35,6 +35,7 @@ export class TextToVarRenderContent extends React.Component<
           }}
           onChange={(e) => {
             this.props.node.updateVarName(e.currentTarget.value);
+            this.props.node.setName("t2v_" + e.currentTarget.value);
             e.stopPropagation();
           }}
         />

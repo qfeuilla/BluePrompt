@@ -27,6 +27,14 @@ export class TextToVarNodeModel extends ParentNodeModel<TextToVarNodeOptions> {
         this.options.var_name = event.data.var_name;
     }
 
+    collectData?(
+        flow_data: { type: string; data: any }[],
+        current_collection: { [collect_name: string] : string},
+        currentGen: { [param_name: string]: number }
+      ) {
+        current_collection[this.getOptions().name!] = flow_data.slice(-1)[0].data;
+      }
+
     execute(flow_data: { type: string; data: any; }[], currentGen: { [param_name: string]: number; }, next_nodes: ParentNodeModel<ParentNodeModelOptions>[], variables: VariableNodeModel[]): Promise<number> {
         const choosen_next_node = 0;
         const current_content = flow_data.slice(-1)[0].data.content;

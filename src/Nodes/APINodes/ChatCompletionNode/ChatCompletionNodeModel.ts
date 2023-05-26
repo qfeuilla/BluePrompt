@@ -51,6 +51,14 @@ export class ChatCompletionNodeModel extends ParentNodeModel<ChatCompletionNodeO
         this.options.temperature = event.data.temperature
     }
 
+    collectData?(
+        flow_data: { type: string; data: any }[],
+        current_collection: { [collect_name: string] : string},
+        currentGen: { [param_name: string]: number }
+      ) {
+        current_collection[this.getOptions().name!] = this.getOptions().content || "";
+    }
+
     async execute(flow_data: { type: string; data: any; }[], currentGen: { [param_name: string]: number; }, next_nodes: ParentNodeModel<ParentNodeModelOptions>[], variables: VariableNodeModel[]): Promise<number | undefined> {
         var messagePath: {
             content: string;

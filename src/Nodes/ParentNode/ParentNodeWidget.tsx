@@ -7,7 +7,7 @@ import { ParentNodeModel } from "./ParentNodeModel";
 import styled from "@emotion/styled";
 import { anyToRGB, hsvToRgb, rgbToHsv, RGBToString } from "../../utils/colors";
 import React from "react";
-import { capitalize } from "@mui/material";
+import { Checkbox, capitalize } from "@mui/material";
 
 // #region useful color stuff
 function contrastColor(color: string): string {
@@ -118,7 +118,52 @@ export class GlobalNodeWidget<
           selected={this.props.node.isSelected()}
         >
           <Head background={this.props.node.getOptions().color}>
-            {capitalize(this.props.node.getOptions().type!)}
+            <div
+              style={{
+                paddingBottom: 3,
+              }}
+            >
+              {capitalize(this.props.node.getOptions().type!)}
+            </div>
+            <input
+              style={{
+                textAlign: "center",
+                width: "75%",
+              }}
+              onKeyDown={(e) => {
+                e.stopPropagation();
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+              }}
+              type="text"
+              defaultValue={this.props.node.getOptions().name}
+              onChange={(e) => {
+                this.props.node.setName(e.currentTarget.value);
+              }}
+            />
+            <Checkbox
+              style={{
+                textAlign: "center",
+                width: "10%",
+              }}
+              onKeyDown={(e) => {
+                e.stopPropagation();
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+              }}
+              defaultChecked={this.props.node.getOptions().collect}
+              onChange={(e) => {
+                this.props.node.setCollectData(e.target.checked);
+              }}
+            />
           </Head>
           <Content
             node={this.props.node}

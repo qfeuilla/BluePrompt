@@ -5,6 +5,7 @@ from typing import List, Optional
 import json
 from threading import Lock
 from flask_cors import CORS
+import pandas as pd
 
 assert os.getenv("OPENAI_API_KEY") is not None, "You must export OPENAI_API_KEY as your OpenAI API key (https://beta.openai.com/account/api-keys)"
 openai.api = os.getenv("OPENAI_API_KEY")
@@ -95,6 +96,17 @@ def save_graph():
     content = request.json["content"]
     save_Lock.acquire(True)
     json.dump(content, open(path, "w+"), indent=4)
+    save_Lock.release()
+    return {"status": "done"}
+
+@app.route("/save_experiment", methods=['POST'])
+def save_experiment():
+    request.get_json(force=True)
+    path = request.json["path"]
+    content = request.json["content"]["collections"]
+    data = pd.DataFrame.from_records(content)
+    save_Lock.acquire(True)
+    data.to_csv(path)
     save_Lock.release()
     return {"status": "done"}
 

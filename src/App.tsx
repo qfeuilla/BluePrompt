@@ -408,6 +408,12 @@ function App() {
     var fail_in_row: number = 0;
     var failed: boolean = false;
 
+    var current_collection: { [collect_name: string]: string };
+    const run_name = current_graph + "_run_" + crypto.randomUUID();
+    var experimentation_saves: {
+      collections: { [collect_name: string]: string }[];
+    } = { collections: [] };
+
     while (true) {
       current_generation_it = variable_generator.next();
 
@@ -426,6 +432,7 @@ function App() {
       } else {
         chat_cache = cache;
       }
+      current_collection = {};
 
       engine.repaintCanvas();
 
@@ -480,6 +487,11 @@ function App() {
         } else {
           current_node._onSkip(flow_data, current_generation, skip);
         }
+        current_node._collectData(
+          flow_data,
+          current_collection,
+          current_generation
+        );
         if (current_node.isLeaf()) graph_heads.splice(0, 1);
         else {
           current_node.flow(
@@ -495,6 +507,13 @@ function App() {
       if (failed) {
         fail_in_row += 1;
       } else {
+        experimentation_saves.collections.push(current_collection);
+        console.log(experimentation_saves);
+        // save the current experiment
+        axios.post("http://localhost:5000/save_experiment", {
+          path: `../experiments/${run_name}.csv`,
+          content: experimentation_saves,
+        });
         fail_in_row = 0;
       }
       engine.repaintCanvas();

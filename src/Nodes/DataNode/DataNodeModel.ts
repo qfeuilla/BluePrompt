@@ -58,6 +58,14 @@ export class DataNodeModel extends ParentNodeModel<DataNodeOptions> {
         return undefined;
     }
 
+    collectData?(
+        flow_data: { type: string; data: any }[],
+        current_collection: { [collect_name: string] : string},
+        currentGen: { [param_name: string]: number }
+      ) {
+        current_collection[this.getOptions().name!] = flow_data.slice(-1)[0].data.content || "";
+    }
+
     onSkip(flow_data: { type: string; data: any; }[], currentGen: { [param_name: string]: number; }, next_nodes: ParentNodeModel<ParentNodeModelOptions>[], variables: VariableNodeModel[], previous_skip: number | undefined): Promise<number | undefined> {
         this.getOptions().content = flow_data.slice(-1)[0].data.content;
 

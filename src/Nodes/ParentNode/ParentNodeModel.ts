@@ -11,13 +11,13 @@ import { SimplePortModel } from "../../Port/SimplePortModel";
 import { VariableNodeModel } from "../VariableNode/VariableNodeModel";
 
 export enum NodeTypes {
-	Data = "data",
-	Parent = "parent",
-	Text2Var = "text to variable",
+  Data = "data",
+  Parent = "parent",
+  Text2Var = "text to variable",
   ChatCompletion = "chat completion",
   Variable = "variable",
   DefaultTransform = "default transform",
-  DefaultAPI = "default API"
+  DefaultAPI = "default API",
 }
 
 export interface ParentNodeModelOptions extends BasePositionModelOptions {
@@ -28,6 +28,7 @@ export interface ParentNodeModelOptions extends BasePositionModelOptions {
   type?: NodeTypes;
   in_use_variables?: string[];
   port_map?: string;
+  collect?: boolean;
   virtual_variables?: LinkModel<LinkModelGenerics>[];
 }
 
@@ -48,6 +49,7 @@ export class ParentNodeModel<
       in_use_variables: [],
       port_map: port_map,
       virtual_variables: [],
+      collect: false,
       ...options,
     } as O);
 
@@ -118,6 +120,7 @@ export class ParentNodeModel<
       height: this.options.height,
       in_use_variables: this.options.in_use_variables,
       port_map: this.options.port_map,
+      collect: this.options.collect,
     };
   }
 
@@ -129,6 +132,7 @@ export class ParentNodeModel<
     this.options.height = event.data.height;
     this.options.in_use_variables = event.data.in_use_variables;
     this.options.port_map = event.data.port_map;
+    this.options.collect = event.data.collect;
   }
 
   addVirtualVariableNode(var_name: string, choices: string[]) {
@@ -239,6 +243,14 @@ export class ParentNodeModel<
     });
   }
 
+  setName(new_name: string) {
+    this.options.name = new_name;
+  }
+
+  setCollectData(collect: boolean) {
+    this.options.collect = collect;
+  }
+
   async _execute(
     flow_data: { type: string; data: any }[],
     currentGen: { [param_name: string]: number }
@@ -264,7 +276,7 @@ export class ParentNodeModel<
   async _onSkip(
     flow_data: { type: string; data: any }[],
     currentGen: { [param_name: string]: number },
-    previous_skip: number | undefined,
+    previous_skip: number | undefined
   ): Promise<number | undefined> {
     if (this.onSkip) {
       return await this.onSkip(
@@ -285,6 +297,27 @@ export class ParentNodeModel<
     }
   }
 
+
+  _collectData(
+    flow_data: { type: string; data: any }[],
+    current_collection: { [collect_name: string] : string},
+    currentGen: { [param_name: string]: number }
+  ) {
+    this.getAttachedVariableNodes().forEach((val: VariableNodeModel) => {
+      if (val.getOptions().collect)
+        val.collectData(flow_data, current_collection, currentGen);
+    })
+
+    if (this.collectData && this.getOptions().collect)
+      this.collectData(flow_data, current_collection, currentGen);
+  }
+  
+  collectData?(
+    flow_data: { type: string; data: any }[],
+    current_collection: { [collect_name: string] : string},
+    currentGen: { [param_name: string]: number }
+  );
+
   async execute?(
     flow_data: { type: string; data: any }[],
     currentGen: { [param_name: string]: number },
@@ -297,7 +330,7 @@ export class ParentNodeModel<
     currentGen: { [param_name: string]: number },
     next_nodes: ParentNodeModel[],
     variables: VariableNodeModel[],
-    previous_skip: number | undefined,
+    previous_skip: number | undefined
   ): Promise<number | undefined>;
 
   // TODO: Fork flow for data node and select flow for function nodes
@@ -334,7 +367,7 @@ export class ParentNodeModel<
 
     toFlowToNodes.forEach((node: ParentNodeModel) => {
       // Check wether some previous data might be erased
-      // If yes, then pass the previous data instead 
+      // If yes, then pass the previous data instead
       var tag: string = node.getTag(current_gen);
       var to_save_data = Object.keys(cache).includes(tag)
         ? cache[tag]["flow_data"]
@@ -342,15 +375,14 @@ export class ParentNodeModel<
       var to_save_skip = Object.keys(cache).includes(tag)
         ? cache[tag]["skip"]
         : -1;
-      
+
       this.options.in_use_variables!.forEach((variable: string) => {
         if (!node.getOptions().in_use_variables!.includes(variable))
           node.getOptions().in_use_variables!.push(variable);
       });
 
-
       // Check wether the actual next step have also already
-      // been cached. If yes then keep this 
+      // been cached. If yes then keep this
       tag = node.getTag(current_gen);
 
       to_save_data = Object.keys(cache).includes(tag)
@@ -362,7 +394,10 @@ export class ParentNodeModel<
 
       // If the top flow has already been computed
       if (!node.waitTopFlow()) {
-        cache[tag] = { flow_data: structuredClone(to_save_data), skip: to_save_skip };
+        cache[tag] = {
+          flow_data: structuredClone(to_save_data),
+          skip: to_save_skip,
+        };
       }
 
       if (!node.waitLeftFlow() && !node.waitTopFlow()) {
