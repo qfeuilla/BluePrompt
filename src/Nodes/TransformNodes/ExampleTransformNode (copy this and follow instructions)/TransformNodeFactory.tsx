@@ -10,7 +10,10 @@ import {
   TransformRenderContent,
   TransformVisualProps,
 } from "./TransformNodeWidget";
-import { NodeTypes } from "../../ParentNode/ParentNodeModel";
+import {
+  NodeTypes,
+  TransformNodeTypes,
+} from "../../ParentNode/ParentNodeModel";
 
 // TODO: replace "Transform" by the name of your transformation
 
@@ -19,7 +22,7 @@ export class TransformNodeFactory extends AbstractReactFactory<
   DiagramEngine
 > {
   constructor() {
-    super(NodeTypes.DefaultTransform);
+    super(TransformNodeTypes.DefaultTransform);
   }
 
   generateReactWidget(

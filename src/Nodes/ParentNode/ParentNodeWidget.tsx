@@ -112,20 +112,26 @@ export class GlobalNodeWidget<
       this.props.RenderContent;
 
     return (
-      <div>
+      <div className="node">
         <Node
           background={this.props.node.getOptions().color}
           selected={this.props.node.isSelected()}
+          className="node"
         >
-          <Head background={this.props.node.getOptions().color}>
+          <Head
+            background={this.props.node.getOptions().color}
+            className="node"
+          >
             <div
               style={{
                 paddingBottom: 3,
               }}
+              className="node"
             >
               {capitalize(this.props.node.getOptions().type!)}
             </div>
             <input
+              className="node"
               style={{
                 textAlign: "center",
                 width: "75%",
@@ -146,6 +152,7 @@ export class GlobalNodeWidget<
               }}
             />
             <Checkbox
+              className="node"
               style={{
                 textAlign: "center",
                 width: "10%",

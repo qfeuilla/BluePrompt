@@ -1,6 +1,6 @@
 import { DeserializeEvent } from "@projectstorm/react-diagrams";
 import {
-  NodeTypes,
+  OtherNodeTypes,
   ParentNodeModel,
   ParentNodeModelOptions,
 } from "../ParentNode/ParentNodeModel";
@@ -16,7 +16,7 @@ export class VariableNodeModel extends ParentNodeModel<VariableNodeOptions> {
   // TODO: check that all the vars in the model have different names. And also t2var nodes.
   constructor(var_name: string, choices: any[]) {
     super("r", {
-      type: NodeTypes.Variable,
+      type: OtherNodeTypes.Variable,
       color: "rgb(40,40,110)",
       var_name: var_name,
       choices: choices,
@@ -47,7 +47,7 @@ export class VariableNodeModel extends ParentNodeModel<VariableNodeOptions> {
     this.setName("var_" + var_name);
   }
 
-  collectData(
+  collectData?(
     flow_data: { type: string; data: any }[],
     current_collection: { [collect_name: string] : string},
     currentGen: { [param_name: string]: number }

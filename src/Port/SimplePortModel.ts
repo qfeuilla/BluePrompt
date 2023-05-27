@@ -57,7 +57,7 @@ export class SimplePortModel extends PortModel<SimplePortModelGenerics> {
     port: PortModel,
     factory?: AbstractModelFactory<T>
   ): T {
-    let link = this.createLinkModel(factory);
+    const link = this.createLinkModel(factory);
     link.setSourcePort(this);
     link.setTargetPort(port);
 
@@ -104,7 +104,7 @@ export class SimplePortModel extends PortModel<SimplePortModelGenerics> {
   }
 
   listLinks(): LinkModel<LinkModelGenerics>[] {
-    var _links: LinkModel<LinkModelGenerics>[] = [];
+    const _links: LinkModel<LinkModelGenerics>[] = [];
     Object.keys(this.getLinks()).forEach((id: string) => {
       _links.push(this.getLinks()[id]);
     });

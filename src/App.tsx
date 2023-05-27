@@ -20,7 +20,12 @@ import { TextToVarNodeFactory } from "./Nodes/TransformNodes/TextToVarNode/TextT
 import { TextToVarNodeModel } from "./Nodes/TransformNodes/TextToVarNode/TextToVarNodeModel";
 import { ChatCompletionNodeModel } from "./Nodes/APINodes/ChatCompletionNode/ChatCompletionNodeModel";
 import { ChatCompletionNodeFactory } from "./Nodes/APINodes/ChatCompletionNode/ChatCompletionNodeFactory";
-import { NodeTypes, ParentNodeModel } from "./Nodes/ParentNode/ParentNodeModel";
+import {
+  NodeTypes,
+  OtherNodeTypes,
+  ParentNodeModel,
+  TransformNodeTypes,
+} from "./Nodes/ParentNode/ParentNodeModel";
 import { useState } from "react";
 import CreatableSelect from "react-select/creatable";
 import LinearProgress from "@mui/joy/LinearProgress";
@@ -206,11 +211,38 @@ function App() {
     engine.repaintCanvas();
   };
 
+  const changeSelectedNodeType = (e: any) => {
+    console.log(e);
+    if (e.target.className !== "node") return;
+
+    var selected_node: ParentNodeModel =
+      model.getSelectedEntities()[0] as ParentNodeModel;
+    if (!selected_node) {
+      return;
+    }
+    switch (selected_node.getOptions().type) {
+      case OtherNodeTypes.Variable:
+        selected_node_type = OtherNodeTypes.Data;
+        break;
+      case OtherNodeTypes.Data:
+        selected_node_type = OtherNodeTypes.ChatCompletion;
+        break;
+      case OtherNodeTypes.ChatCompletion:
+        selected_node_type = TransformNodeTypes.Text2Var;
+        break;
+      case TransformNodeTypes.Text2Var:
+        selected_node_type = OtherNodeTypes.Data;
+        break;
+      default:
+        break;
+    }
+  };
+
   const AddChild = (prompt_type = PromptType.User, content?: string) => {
     var selected_node: ParentNodeModel =
       model.getSelectedEntities()[0] as ParentNodeModel;
     if (!selected_node) {
-      toast("You need to select a node", { type: "error" });
+      // toast("You need to select a node", { type: "error" });
       return;
     }
     var new_node: ParentNodeModel;
@@ -230,11 +262,11 @@ function App() {
       );
     } else {
       switch (selected_node_type) {
-        case NodeTypes.Variable:
-          if (selected_node.getOptions().type === NodeTypes.Variable) {
-            toast("you can't add a VariableNode as a child to a VariableNode", {
-              type: "error",
-            });
+        case OtherNodeTypes.Variable:
+          if (selected_node.getOptions().type === OtherNodeTypes.Variable) {
+            // toast("you can't add a VariableNode as a child to a VariableNode", {
+            //   type: "error",
+            // });
             return;
           }
           new_node = new VariableNodeModel("", []);
@@ -246,11 +278,11 @@ function App() {
             selected_node.getY()
           );
           break;
-        case NodeTypes.Data:
+        case OtherNodeTypes.Data:
           new_node = new DataNodeModel(PromptType.User);
           if (
-            selected_node.getOptions().type === NodeTypes.Data ||
-            selected_node.getOptions().type === NodeTypes.ChatCompletion
+            selected_node.getOptions().type === OtherNodeTypes.Data ||
+            selected_node.getOptions().type === OtherNodeTypes.ChatCompletion
           ) {
             link = (selected_node.bottomPort() as SimplePortModel).link(
               new_node.topPort() as SimplePortModel
@@ -271,11 +303,11 @@ function App() {
             );
           }
           break;
-        case NodeTypes.ChatCompletion:
+        case OtherNodeTypes.ChatCompletion:
           new_node = new ChatCompletionNodeModel();
           if (
-            selected_node.getOptions().type === NodeTypes.Data ||
-            selected_node.getOptions().type === NodeTypes.ChatCompletion
+            selected_node.getOptions().type === OtherNodeTypes.Data ||
+            selected_node.getOptions().type === OtherNodeTypes.ChatCompletion
           ) {
             link = (selected_node.bottomPort() as SimplePortModel).link(
               new_node.topPort() as SimplePortModel
@@ -296,11 +328,11 @@ function App() {
             );
           }
           break;
-        case NodeTypes.Text2Var:
+        case TransformNodeTypes.Text2Var:
           new_node = new TextToVarNodeModel("");
           if (
-            selected_node.getOptions().type === NodeTypes.Data ||
-            selected_node.getOptions().type === NodeTypes.ChatCompletion
+            selected_node.getOptions().type === OtherNodeTypes.Data ||
+            selected_node.getOptions().type === OtherNodeTypes.ChatCompletion
           ) {
             link = (selected_node.bottomPort() as SimplePortModel).link(
               new_node.leftPort() as SimplePortModel
@@ -508,7 +540,7 @@ function App() {
             // TODO: carful when adding new nodes, maybe make something cleaner than this
             if (
               estimate_price &&
-              current_node.getOptions().type === NodeTypes.ChatCompletion
+              current_node.getOptions().type === OtherNodeTypes.ChatCompletion
             ) {
               var price;
               ({ price, skip } = (await current_node._execute(
@@ -576,7 +608,7 @@ function App() {
       toast(
         `(calculated with the maximum amount of token at each of the nodes, in reality you can expect 50%/70% lower cost for tasks that doesn't require a lot of tokens completions).
         If you want a more accurate reading, set the maximum tokens of each api call as close as possible as your average run, estimate the price again and then put it back to original.`,
-        { autoClose: false }
+        {}
       );
     }
     running = 0;
@@ -641,22 +673,22 @@ function App() {
   var _mouseX = 0;
   var _mouseY = 0;
 
-  var selected_node_type: NodeTypes = NodeTypes.Variable;
+  var selected_node_type: NodeTypes = OtherNodeTypes.Variable;
 
   const handleKeyPress = (e: KeyboardEvent) => {
     if (e.key === "a" && e.ctrlKey) {
       e.preventDefault();
       switch (selected_node_type) {
-        case NodeTypes.Variable:
+        case OtherNodeTypes.Variable:
           AddVarNode(_mouseX, _mouseY);
           break;
-        case NodeTypes.Data:
+        case OtherNodeTypes.Data:
           AddDataNode(_mouseX, _mouseY);
           break;
-        case NodeTypes.ChatCompletion:
+        case OtherNodeTypes.ChatCompletion:
           AddAPINode(_mouseX, _mouseY);
           break;
-        case NodeTypes.Text2Var:
+        case TransformNodeTypes.Text2Var:
           AddTransformNode(_mouseX, _mouseY);
           break;
       }
@@ -695,6 +727,7 @@ function App() {
     <div
       className="App"
       onMouseUp={(e) => {
+        changeSelectedNodeType(e);
         saveNowGraph();
       }}
       onKeyUp={(e) => {
@@ -728,6 +761,7 @@ function App() {
               padding: 0,
               display: "inline-block",
             }}
+            id="node_type_select"
           >
             <select
               style={{
@@ -738,11 +772,16 @@ function App() {
               onChange={(e) => {
                 selected_node_type = e.currentTarget.value as NodeTypes;
               }}
+              defaultValue={selected_node_type}
             >
-              <option value={NodeTypes.Variable}>Variable node</option>
-              <option value={NodeTypes.Data}>Data node</option>
-              <option value={NodeTypes.ChatCompletion}>Chat GPT node</option>
-              <option value={NodeTypes.Text2Var}>TextToVariable node</option>
+              <option value={OtherNodeTypes.Variable}>Variable node</option>
+              <option value={OtherNodeTypes.Data}>Data node</option>
+              <option value={OtherNodeTypes.ChatCompletion}>
+                Chat GPT node
+              </option>
+              <option value={TransformNodeTypes.Text2Var}>
+                TextToVariable node
+              </option>
             </select>
           </div>
           <input
@@ -805,7 +844,7 @@ function App() {
         <LinearProgress
           id="progress"
           determinate
-          thickness={20}
+          thickness={10}
           value={((running - 1) / total_experiments) * 100}
         />
         <input
@@ -814,7 +853,7 @@ function App() {
             kill = true;
           }}
           value={"KILL"}
-          style={{ width: "30%", height: "5vh", background: "red" }}
+          style={{ width: "30%", height: "3vh", background: "red" }}
         />
         <input
           type="button"
@@ -822,7 +861,7 @@ function App() {
             stop = true;
           }}
           value={"clean stop"}
-          style={{ width: "30%", height: "5vh", background: "orange" }}
+          style={{ width: "30%", height: "3vh", background: "orange" }}
         />
       </div>
       <div id="application" className="canvas" style={{ height: "95vh" }}>

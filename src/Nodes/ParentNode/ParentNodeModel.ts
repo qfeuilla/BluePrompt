@@ -10,15 +10,20 @@ import {
 import { SimplePortModel } from "../../Port/SimplePortModel";
 import { VariableNodeModel } from "../VariableNode/VariableNodeModel";
 
-export enum NodeTypes {
+export enum TransformNodeTypes {
+  Text2Var = "text to variable",
+  DefaultTransform = "default transform",
+}
+
+export enum OtherNodeTypes {
   Data = "data",
   Parent = "parent",
-  Text2Var = "text to variable",
-  ChatCompletion = "chat completion",
   Variable = "variable",
-  DefaultTransform = "default transform",
+  ChatCompletion = "chat completion",
   DefaultAPI = "default API",
 }
+
+export type NodeTypes = TransformNodeTypes | OtherNodeTypes
 
 export interface ParentNodeModelOptions extends BasePositionModelOptions {
   name?: string;
@@ -43,7 +48,7 @@ export class ParentNodeModel<
 > extends NodeModel<ParentNodeModelGenerics<O>> {
   constructor(port_map: string, options?: O) {
     super({
-      type: NodeTypes.Parent,
+      type: OtherNodeTypes.Parent,
       name: "node_" + crypto.randomUUID(),
       color: "rgb(150,70,150)",
       in_use_variables: [],
@@ -101,7 +106,7 @@ export class ParentNodeModel<
     else return this.rightPort()!;
   }
   flowInPorts(): SimplePortModel[] {
-    var flowInPorts: SimplePortModel[] = [];
+    const flowInPorts: SimplePortModel[] = [];
 
     if (this.getOptions().port_map!.includes("l"))
       flowInPorts.push(this.leftPort()!);
@@ -187,7 +192,7 @@ export class ParentNodeModel<
   }
 
   getTag(currentGen: { [param_name: string]: number }): string {
-    var tag = this.options.name;
+    let tag = this.options.name;
     this.options.in_use_variables!.forEach((element: string) => {
       tag = tag!.concat(element + "_" + currentGen[element]);
     });
@@ -195,7 +200,7 @@ export class ParentNodeModel<
   }
 
   getChildren(): ParentNodeModel[] {
-    var children: ParentNodeModel[] = [];
+    const children: ParentNodeModel[] = [];
 
     this.flowOutPort()
       .listLinks()
@@ -207,7 +212,7 @@ export class ParentNodeModel<
   }
 
   getLeftNodes(): ParentNodeModel[] {
-    var left: ParentNodeModel[] = [];
+    const left: ParentNodeModel[] = [];
 
     if (this.leftPort())
       this.leftPort()!
@@ -221,7 +226,7 @@ export class ParentNodeModel<
   }
 
   getAttachedVariableNodes(): VariableNodeModel[] {
-    var nodes: VariableNodeModel[] = [];
+    const nodes: VariableNodeModel[] = [];
     this.getLeftNodes().forEach((node: ParentNodeModel) => {
       if (
         node.getOptions().type === "variable" &&
@@ -307,7 +312,7 @@ export class ParentNodeModel<
   ) {
     this.getAttachedVariableNodes().forEach((val: VariableNodeModel) => {
       if (val.getOptions().collect)
-        val.collectData(flow_data, current_collection, currentGen);
+        val.collectData!(flow_data, current_collection, currentGen);
     })
 
     if (this.collectData && this.getOptions().collect)
@@ -351,7 +356,7 @@ export class ParentNodeModel<
   ) {
     current_nodes.splice(0, 1);
 
-    var toFlowToNodes: ParentNodeModel[] = [];
+    let toFlowToNodes: ParentNodeModel[] = [];
     if (!id) {
       this.flowOutPort().getOptions().resolved += this.getChildren().length;
       toFlowToNodes = toFlowToNodes.concat(this.getChildren());
@@ -371,11 +376,11 @@ export class ParentNodeModel<
     toFlowToNodes.forEach((node: ParentNodeModel) => {
       // Check wether some previous data might be erased
       // If yes, then pass the previous data instead
-      var tag: string = node.getTag(current_gen);
-      var to_save_data = Object.keys(cache).includes(tag)
+      let tag: string = node.getTag(current_gen);
+      let to_save_data = Object.keys(cache).includes(tag)
         ? cache[tag]["flow_data"]
         : current_flow_data;
-      var to_save_skip = Object.keys(cache).includes(tag)
+      let to_save_skip = Object.keys(cache).includes(tag)
         ? cache[tag]["skip"]
         : -1;
 

@@ -1,5 +1,5 @@
 import { DeserializeEvent } from "@projectstorm/react-diagrams";
-import { NodeTypes, ParentNodeModel, ParentNodeModelOptions } from "../ParentNode/ParentNodeModel";
+import { NodeTypes, OtherNodeTypes, ParentNodeModel, ParentNodeModelOptions } from "../ParentNode/ParentNodeModel";
 import {Point} from "@projectstorm/geometry"
 import axios from "axios";
 import { VariableNodeModel } from "../VariableNode/VariableNodeModel";
@@ -19,7 +19,7 @@ export interface DataNodeOptions extends ParentNodeModelOptions {
 export class DataNodeModel extends ParentNodeModel<DataNodeOptions> {
     constructor(prompt_type: PromptType = PromptType.User) {
         super("ltb", {
-            type: NodeTypes.Data,
+            type: OtherNodeTypes.Data,
             color: 'rgb(60,110,40)',
             prompt_type: prompt_type
         })
@@ -42,7 +42,7 @@ export class DataNodeModel extends ParentNodeModel<DataNodeOptions> {
     }
 
     async execute(flow_data: { type: string; data: any; }[], currentGen: { [param_name: string]: number; }, next_nodes: ParentNodeModel<ParentNodeModelOptions>[], variables: VariableNodeModel[]): Promise<number | undefined> {
-        var processed_content = this.options.content!;
+        let processed_content = this.options.content!;
         
         this.getAttachedVariableNodes().forEach((_var: VariableNodeModel) => {
             processed_content = processed_content ? processed_content.replace(new RegExp("{" + _var.getOptions().var_name + "}", "g"), _var.getOptions().choices[currentGen[_var.getOptions().var_name]]) : processed_content;

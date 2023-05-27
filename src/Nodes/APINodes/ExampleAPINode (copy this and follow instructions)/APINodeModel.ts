@@ -1,5 +1,5 @@
 import { DeserializeEvent } from "@projectstorm/react-diagrams";
-import { NodeTypes, ParentNodeModel, ParentNodeModelOptions } from "../../ParentNode/ParentNodeModel";
+import { NodeTypes, OtherNodeTypes, ParentNodeModel, ParentNodeModelOptions } from "../../ParentNode/ParentNodeModel";
 
 //
 // Important: API node take in (previous flow_data, active variable, next nodes)
@@ -10,14 +10,12 @@ import { NodeTypes, ParentNodeModel, ParentNodeModelOptions } from "../../Parent
 // TODO: replace "API" and "api" by the name of your API call
 
 
-export interface APINodeOptions extends ParentNodeModelOptions {
-    // TODO: Here add any option needed for execution your function
-}
+export type APINodeOptions = ParentNodeModelOptions
 
 export class APINodeModel extends ParentNodeModel<APINodeOptions> {
     constructor() {
         super("tdl", {
-            type: NodeTypes.DefaultAPI,
+            type: OtherNodeTypes.DefaultAPI,
             color: 'rgb(255, 140, 0)',
         })
     }

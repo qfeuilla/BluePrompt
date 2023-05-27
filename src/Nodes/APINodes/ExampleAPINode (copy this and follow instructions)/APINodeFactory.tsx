@@ -7,7 +7,7 @@ import {
 import { APINodeModel } from "./APINodeModel";
 import { GlobalNodeWidget } from "../../ParentNode/ParentNodeWidget";
 import { APIRenderContent, APIVisualProps } from "./APINodeWidget";
-import { NodeTypes } from "../../ParentNode/ParentNodeModel";
+import { NodeTypes, OtherNodeTypes } from "../../ParentNode/ParentNodeModel";
 
 // TODO: replace "API" by the name of your API
 
@@ -16,7 +16,7 @@ export class APINodeFactory extends AbstractReactFactory<
   DiagramEngine
 > {
   constructor() {
-    super(NodeTypes.DefaultAPI);
+    super(OtherNodeTypes.DefaultAPI);
   }
 
   generateReactWidget(event: GenerateWidgetEvent<APINodeModel>): JSX.Element {

@@ -1,6 +1,6 @@
 import { DeserializeEvent } from "@projectstorm/react-diagrams";
 import {
-  NodeTypes,
+  OtherNodeTypes,
   ParentNodeModel,
   ParentNodeModelOptions,
 } from "../../ParentNode/ParentNodeModel";
@@ -29,7 +29,7 @@ export class ChatCompletionNodeModel extends ParentNodeModel<ChatCompletionNodeO
     model: ModelType = ModelType.GPT3
   ) {
     super("tbl", {
-      type: NodeTypes.ChatCompletion,
+      type: OtherNodeTypes.ChatCompletion,
       color: "rgb(255, 140, 0)",
       prompt_type: prompt_type,
       model: model,
@@ -37,7 +37,7 @@ export class ChatCompletionNodeModel extends ParentNodeModel<ChatCompletionNodeO
     });
   }
 
-  serialize(): any {
+  serialize() {
     return {
       ...super.serialize(),
       content: this.options.content,
@@ -73,7 +73,7 @@ export class ChatCompletionNodeModel extends ParentNodeModel<ChatCompletionNodeO
     variables: VariableNodeModel[],
     estimatePrice: boolean
   ): Promise<number | undefined | { price: number; skip: number | undefined }> {
-    var messagePath: {
+    const messagePath: {
       content: string;
       role: string;
     }[] = [];

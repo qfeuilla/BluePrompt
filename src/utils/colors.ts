@@ -151,7 +151,7 @@ function nameToHex(name: string): string {
 function hexOrStrRGBToRGB(hex_or_rgb: string): RGB {
   if (hex_or_rgb.slice(0, 3) !== "rgb") {
     if (hex_or_rgb[0] === "#") hex_or_rgb.slice(1);
-    var r = parseInt(hex_or_rgb.slice(0, 2), 16),
+    const r = parseInt(hex_or_rgb.slice(0, 2), 16),
       g = parseInt(hex_or_rgb.slice(2, 4), 16),
       b = parseInt(hex_or_rgb.slice(4, 6), 16);
     return {
@@ -178,13 +178,13 @@ export function rgbToHsv({ r, g, b }: RGB): HSV {
   g /= 255;
   b /= 255;
 
-  let max = Math.max(r, g, b),
+  const max = Math.max(r, g, b),
     min = Math.min(r, g, b);
   let h: number = max,
-    s: number = max,
-    v = max;
+    s: number = max;
+  const v = max;
 
-  let d = max - min;
+  const d = max - min;
   s = max === 0 ? 0 : d / max;
 
   if (max === min) {
@@ -211,11 +211,11 @@ export function rgbToHsv({ r, g, b }: RGB): HSV {
 export function hsvToRgb({ h, s, v }: HSV): RGB {
   let r: number, g: number, b: number;
 
-  let i = Math.floor(h * 6);
-  let f = h * 6 - i;
-  let p = v * (1 - s);
-  let q = v * (1 - f * s);
-  let t = v * (1 - (1 - f) * s);
+  const i = Math.floor(h * 6);
+  const f = h * 6 - i;
+  const p = v * (1 - s);
+  const q = v * (1 - f * s);
+  const t = v * (1 - (1 - f) * s);
 
   switch (i % 6) {
     case 0:

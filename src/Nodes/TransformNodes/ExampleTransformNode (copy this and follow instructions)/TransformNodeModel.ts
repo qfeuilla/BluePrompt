@@ -1,5 +1,5 @@
 import { DeserializeEvent } from "@projectstorm/react-diagrams";
-import { NodeTypes, ParentNodeModel, ParentNodeModelOptions } from "../../ParentNode/ParentNodeModel";
+import { NodeTypes, ParentNodeModel, ParentNodeModelOptions, TransformNodeTypes } from "../../ParentNode/ParentNodeModel";
 
 //
 // Important: transform node take in (previous flow_data, active variable, next nodes)
@@ -11,14 +11,12 @@ import { NodeTypes, ParentNodeModel, ParentNodeModelOptions } from "../../Parent
 // TODO: replace "Transform" and "transform" by the name of your transformation
 
 
-export interface TransformNodeOptions extends ParentNodeModelOptions {
-    // TODO: Here add any option needed for execution your function
-}
+export type TransformNodeOptions = ParentNodeModelOptions
 
 export class TransformNodeModel extends ParentNodeModel<TransformNodeOptions> {
     constructor() {
         super("lr", {
-            type: NodeTypes.DefaultTransform,
+            type: TransformNodeTypes.DefaultTransform,
             color: 'rgb(20,60,200)',
         })
     }

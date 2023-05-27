@@ -10,14 +10,14 @@ import {
   ChatCompletionRenderContent,
   ChatCompletionVisualProps,
 } from "./ChatCompletionNodeWidget";
-import { NodeTypes } from "../../ParentNode/ParentNodeModel";
+import { NodeTypes, OtherNodeTypes } from "../../ParentNode/ParentNodeModel";
 
 export class ChatCompletionNodeFactory extends AbstractReactFactory<
   ChatCompletionNodeModel,
   DiagramEngine
 > {
   constructor() {
-    super(NodeTypes.ChatCompletion);
+    super(OtherNodeTypes.ChatCompletion);
   }
 
   generateReactWidget(

@@ -10,14 +10,17 @@ import {
   TextToVarRenderContent,
   TextToVarVisualProps,
 } from "./TextToVarNodeWidget";
-import { NodeTypes } from "../../ParentNode/ParentNodeModel";
+import {
+  NodeTypes,
+  TransformNodeTypes,
+} from "../../ParentNode/ParentNodeModel";
 
 export class TextToVarNodeFactory extends AbstractReactFactory<
   TextToVarNodeModel,
   DiagramEngine
 > {
   constructor() {
-    super(NodeTypes.Text2Var);
+    super(TransformNodeTypes.Text2Var);
   }
 
   generateReactWidget(
