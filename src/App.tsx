@@ -23,6 +23,7 @@ import { ChatCompletionNodeFactory } from "./Nodes/APINodes/ChatCompletionNode/C
 import { NodeTypes, ParentNodeModel } from "./Nodes/ParentNode/ParentNodeModel";
 import { useState } from "react";
 import CreatableSelect from "react-select/creatable";
+import LinearProgress from "@mui/joy/LinearProgress";
 
 // TODO: prevent unliked link
 // TODO: delete link
@@ -376,17 +377,11 @@ function App() {
     engine.repaintCanvas();
   };
 
-  const getPreviousNode = (node: ParentNodeModel) => {
-    return node
-      .getPorts()
-      ["top"].getLinks()
-      [Object.keys(node.getPorts()["top"].getLinks())[0]].getSourcePort()
-      .getParent() as ParentNodeModel;
-  };
-
-  const RunGraph = async () => {
+  const RunGraph = async (estimate_price: boolean = false) => {
+    // TODO: fix bug by recalculating connected node each loops
+    // prevent action on the running graph
     document.getElementById("toolbar")!.hidden = true;
-    document.getElementById("experiment_bar")!.hidden = false;
+
     var cache: {
       [tag: string]: {
         flow_data: { type: string; data: any }[];
@@ -423,18 +418,28 @@ function App() {
     var fail_in_row: number = 0;
     var failed: boolean = false;
 
+    var total_price: number | undefined = undefined;
+
     var current_collection: { [collect_name: string]: string };
     const run_name = current_graph + "_run_" + crypto.randomUUID();
     var experimentation_saves: {
       collections: { [collect_name: string]: string }[];
     } = { collections: [] };
 
+    // display the experiment toolbar
+    document.getElementById("experiment_bar")!.hidden = false;
+
     while (true) {
       running += 1;
+      // trick to reload the bar
+      document.getElementById(
+        "progress"
+      )!.innerHTML = `${running}/${total_experiments}`;
+
       current_generation_it = variable_generator.next();
 
       if (var_nodes.length > 0) {
-        // reset all currently used var, contents and virutal vars
+        // reset all currently used var, contents and virtual vars
         (model.getNodes() as ParentNodeModel[]).forEach(
           (node: ParentNodeModel) => {
             node.resetUsedVariable();
@@ -452,7 +457,15 @@ function App() {
 
       engine.repaintCanvas();
 
-      if (current_generation_it.done || kill || stop) break;
+      if (
+        current_generation_it.done ||
+        kill ||
+        stop ||
+        (estimate_price && total_price !== undefined)
+      )
+        break;
+      total_price = 0;
+
       if (fail_in_row >= 3) {
         toast(
           "Please review the toasted error (you can also access them logged in the terminal), the graph is now stopped with your previous result saved",
@@ -492,7 +505,25 @@ function App() {
         ({ flow_data, skip } = cache[tag]);
         if (skip === -1) {
           try {
-            skip = await current_node._execute(flow_data, current_generation);
+            // TODO: carful when adding new nodes, maybe make something cleaner than this
+            if (
+              estimate_price &&
+              current_node.getOptions().type === NodeTypes.ChatCompletion
+            ) {
+              var price;
+              ({ price, skip } = (await current_node._execute(
+                flow_data,
+                current_generation,
+                estimate_price
+              )) as { price: number; skip: number | undefined });
+              total_price += price;
+            } else {
+              skip = (await current_node._execute(
+                flow_data,
+                current_generation,
+                estimate_price
+              )) as number | undefined;
+            }
           } catch (error) {
             console.log(error);
             toast((error as Error)["message"], { type: "error" });
@@ -534,6 +565,20 @@ function App() {
       }
       engine.repaintCanvas();
     }
+    if (estimate_price) {
+      toast(
+        `The maximum total cost of the run will be : ${
+          total_price! * total_experiments
+        }$.
+        At ${total_price!}$ / runs`,
+        { autoClose: false, type: "info" }
+      );
+      toast(
+        `(calculated with the maximum amount of token at each of the nodes, in reality you can expect 50%/70% lower cost for tasks that doesn't require a lot of tokens completions).
+        If you want a more accurate reading, set the maximum tokens of each api call as close as possible as your average run, estimate the price again and then put it back to original.`,
+        { autoClose: false }
+      );
+    }
     running = 0;
     kill = false;
     stop = false;
@@ -542,45 +587,53 @@ function App() {
     document.getElementById("experiment_bar")!.hidden = true;
   };
 
-  const completePath = async () => {
-    var selected_node = model.getSelectedEntities()[0] as
-      | DataNodeModel
-      | ChatCompletionNodeModel;
-    var messagePath: {
-      content: string;
-      role: string;
-    }[] = [];
-    var parent: DataNodeModel | ChatCompletionNodeModel = selected_node;
+  // const getPreviousNode = (node: ParentNodeModel) => {
+  //   return node
+  //     .getPorts()
+  //     ["top"].getLinks()
+  //     [Object.keys(node.getPorts()["top"].getLinks())[0]].getSourcePort()
+  //     .getParent() as ParentNodeModel;
+  // };
 
-    if (!selected_node) {
-      toast("You need to select a node", { type: "error" });
-      return;
-    }
+  // const completePath = async () => {
+  //   var selected_node = model.getSelectedEntities()[0] as
+  //     | DataNodeModel
+  //     | ChatCompletionNodeModel;
+  //   var messagePath: {
+  //     content: string;
+  //     role: string;
+  //   }[] = [];
+  //   var parent: DataNodeModel | ChatCompletionNodeModel = selected_node;
 
-    messagePath.push({
-      content: selected_node.getOptions().content || "",
-      role: selected_node.getOptions().prompt_type || "user",
-    });
+  //   if (!selected_node) {
+  //     toast("You need to select a node", { type: "error" });
+  //     return;
+  //   }
 
-    try {
-      while (true) {
-        parent = getPreviousNode(parent) as
-          | DataNodeModel
-          | ChatCompletionNodeModel;
-        messagePath.push({
-          content: parent.getOptions().content || "",
-          role: parent.getOptions().prompt_type || "",
-        });
-      }
-    } catch (error) {}
+  //   messagePath.push({
+  //     content: selected_node.getOptions().content || "",
+  //     role: selected_node.getOptions().prompt_type || "user",
+  //   });
 
-    var data = (
-      await axios.post("http://localhost:5000/complete", {
-        messages: messagePath.reverse(),
-      })
-    ).data;
-    AddChild("assistant" as PromptType, data["response"]);
-  };
+  //   try {
+  //     while (true) {
+  //       parent = getPreviousNode(parent) as
+  //         | DataNodeModel
+  //         | ChatCompletionNodeModel;
+  //       messagePath.push({
+  //         content: parent.getOptions().content || "",
+  //         role: parent.getOptions().prompt_type || "",
+  //       });
+  //     }
+  //   } catch (error) {}
+
+  //   var data = (
+  //     await axios.post("http://localhost:5000/complete_chat", {
+  //       messages: messagePath.reverse(),
+  //     })
+  //   ).data;
+  //   AddChild("assistant" as PromptType, data["response"]);
+  // };
 
   engine.setModel(model);
   loadGraph(current_graph);
@@ -714,9 +767,11 @@ function App() {
           />
           <input
             type="button"
-            onClick={completePath}
-            value={"Complete"}
-            style={{ width: "10%", height: "5vh" }}
+            onClick={() => {
+              RunGraph(true);
+            }}
+            value={"estimate price"}
+            style={{ width: "7%", height: "5vh", background: "gold" }}
           />
           <input
             type="button"
@@ -727,7 +782,7 @@ function App() {
         </div>
         <input
           type="button"
-          onClick={RunGraph}
+          onClick={() => RunGraph()}
           value={"Run Graph"}
           style={{
             width: 250,
@@ -740,7 +795,19 @@ function App() {
           }}
         />
       </div>
-      <div hidden id="experiment_bar">
+      <div
+        hidden
+        id="experiment_bar"
+        onChange={(e) => {
+          console.log("change");
+        }}
+      >
+        <LinearProgress
+          id="progress"
+          determinate
+          thickness={20}
+          value={((running - 1) / total_experiments) * 100}
+        />
         <input
           type="button"
           onClick={() => {

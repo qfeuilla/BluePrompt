@@ -253,14 +253,16 @@ export class ParentNodeModel<
 
   async _execute(
     flow_data: { type: string; data: any }[],
-    currentGen: { [param_name: string]: number }
-  ): Promise<number | undefined> {
+    currentGen: { [param_name: string]: number },
+    estimatePrice: boolean,
+  ): Promise<number | undefined | {price: number, skip: number | undefined}> {
     if (this.execute) {
       return await this.execute(
         flow_data,
         currentGen,
         this.getChildren(),
-        this.getAttachedVariableNodes()
+        this.getAttachedVariableNodes(),
+        estimatePrice
       );
     } else {
       console.error(
@@ -322,8 +324,9 @@ export class ParentNodeModel<
     flow_data: { type: string; data: any }[],
     currentGen: { [param_name: string]: number },
     next_nodes: ParentNodeModel[],
-    variables: VariableNodeModel[]
-  ): Promise<number | undefined>;
+    variables: VariableNodeModel[],
+    estimatePrice: boolean,
+  ): Promise<number | undefined | {price: number, skip: number | undefined}>;
 
   async onSkip?(
     flow_data: { type: string; data: any }[],

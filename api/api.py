@@ -6,6 +6,13 @@ import json
 from threading import Lock
 from flask_cors import CORS
 import pandas as pd
+import tiktoken
+
+price_table = {
+	"gpt-4" : [0.03, 0.06], 
+    "gpt-4-32k": [0.06, 0.12], 
+    "gpt-3.5-turbo": [0.002, 0.002],
+}
 
 assert os.getenv("OPENAI_API_KEY") is not None, "You must export OPENAI_API_KEY as your OpenAI API key (https://beta.openai.com/account/api-keys)"
 openai.api = os.getenv("OPENAI_API_KEY")
@@ -20,7 +27,7 @@ class ChatNode:
         self.children: List[ChatNode] = [] # a list of ChatNode objects
         self.parent: Optional[ChatNode] = None # the parent node
 
-    def complete(self, model: str = "gpt-3.5-turbo", temperature: float = 0.7, **kwargs):
+    def complete(self, model: str = "gpt-3.5-turbo", temperature: float = 0.7, max_tokens=512, **kwargs):
         # append the completion of the current branch to the child
         messages = self.get_messages() # get the messages from the root to this node
         retry = 3
@@ -30,6 +37,7 @@ class ChatNode:
                     model=model,
                     messages=messages,
                     temperature=temperature,
+                    max_tokens=max_tokens,
                     **kwargs
                 )
                 retry = 0
@@ -64,10 +72,26 @@ app = Flask(__name__)
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
-@app.route('/complete', methods=['POST'])
+@app.route('/estimate_price', methods=['POST'])
+def estimate_price():
+    request.get_json(force=True)
+    messages = request.json['messages']
+    max_tokens = request.json['max_tokens'] if 'max_tokens' in request.json else 512
+    model = request.json["model"]
+    encoding = tiktoken.encoding_for_model(model)
+    count = 0
+
+    for message in messages:
+        count += len(encoding.encode(message["content"]))
+
+    return {"price": ((count / 1000) * price_table[model][0]) + ((max_tokens / 1000) * price_table[model][1])}
+
+
+@app.route('/complete_chat', methods=['POST'])
 def complete():
     request.get_json(force=True)
     messages = request.json['messages']
+    max_tokens = request.json['max_tokens'] if 'max_tokens' in request.json else 512
     prev_node = None
     
     for message in messages:
@@ -77,7 +101,7 @@ def complete():
             node.parent = prev_node
         prev_node = node
 
-    child = prev_node.complete(model=request.json["model"], temperature=request.json["temperature"])
+    child = prev_node.complete(model=request.json["model"], temperature=request.json["temperature"], max_tokens=max_tokens)
     return {"response": child.content}
 
 @app.route("/load_graph", methods=['POST'])
