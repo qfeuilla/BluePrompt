@@ -508,13 +508,8 @@ function App() {
       var graph_heads: ParentNodeModel[] = (
         model.getNodes() as ParentNodeModel[]
       ).filter((node: ParentNodeModel) => {
-        return node.isRoot();
+        return node.isChatRoot();
       });
-
-      if (graph_heads.length < 1) {
-        toast("No root node in the graph", { type: "error" });
-        return;
-      }
 
       for (let index = 0; index < graph_heads.length; index++) {
         const head = graph_heads[index];
@@ -523,6 +518,16 @@ function App() {
           flow_data: [],
           skip: -1,
         };
+      }
+
+      // Only keep the flow root
+      graph_heads = graph_heads.filter((node: ParentNodeModel) => {
+        return node.isFlowRoot();
+      });
+
+      if (graph_heads.length < 1) {
+        toast("No root node in the graph", { type: "error" });
+        return;
       }
 
       while (graph_heads.length) {

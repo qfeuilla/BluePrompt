@@ -64,7 +64,7 @@ export class DataNodeModel extends ParentNodeModel<DataNodeOptions> {
     });
 
     flow_data.push({
-      type: this.options.prompt_type || PromptType.Assistant,
+      type: this.options.prompt_type || PromptType.User,
       data: {
         content: processed_content,
       },
@@ -89,7 +89,23 @@ export class DataNodeModel extends ParentNodeModel<DataNodeOptions> {
     variables: VariableNodeModel[],
     previous_skip: number | undefined
   ): Promise<number | undefined> {
-    this.getOptions().content = flow_data.slice(-1)[0].data.content;
+    let processed_content = this.options.content!;
+
+    this.getAttachedVariableNodes().forEach((_var: VariableNodeModel) => {
+      processed_content = processed_content
+        ? processed_content.replace(
+            new RegExp("{" + _var.getOptions().var_name + "}", "g"),
+            _var.getOptions().choices[currentGen[_var.getOptions().var_name]]
+          )
+        : processed_content;
+    });
+
+    flow_data.push({
+      type: this.options.prompt_type || PromptType.User,
+      data: {
+        content: processed_content,
+      },
+    });
 
     return Promise.resolve(previous_skip);
   }

@@ -187,7 +187,9 @@ export class ParentNodeModel<
 
   fixPortConnections(): void {
     if (this.leftPort()) {
-      this.leftPort()!.getOptions().connected =  this.leftPort()!.listLinks().length
+      this.leftPort()!.getOptions().connected =  this.leftPort()!.listLinks().filter((link) => {
+        link.getSourcePort().getParent().getOptions().type !== OtherNodeTypes.Variable
+      }).length
     } if (this.rightPort()) {
       this.rightPort()!.getOptions().connected =  this.rightPort()!.listLinks().length
     } if (this.bottomPort()) {
@@ -197,11 +199,20 @@ export class ParentNodeModel<
     }
   }
 
-  isRoot(): boolean {
+  isFlowRoot(): boolean {
+    return (this.topPort()
+      ? Object.keys(this.topPort()!.listLinks()).length < 1
+      : false) && (this.leftPort() ? this.leftPort()!.listLinks().filter((link) => {
+        return Object.values(TransformNodeTypes).includes(link.getSourcePort().getParent().getOptions().type as TransformNodeTypes); 
+      }).length < 1 : false);
+  }
+
+  isChatRoot(): boolean {
     return this.topPort()
       ? Object.keys(this.topPort()!.listLinks()).length < 1
       : false;
   }
+
 
   getTag(currentGen: { [param_name: string]: number }): string {
     let tag = this.options.name;
