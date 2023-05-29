@@ -104,7 +104,7 @@ export class ChatCompletionNodeModel extends ParentNodeModel<ChatCompletionNodeO
           })
       ).data;
 
-      this.getOptions().content = response.completioon;
+      this.getOptions().content = response.completion;
 
       flow_data.push({
         type: this.options.prompt_type || PromptType.Assistant,
