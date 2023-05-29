@@ -21,6 +21,7 @@ export interface ChatCompletionNodeOptions extends ParentNodeModelOptions {
   prompt_type?: PromptType;
   model?: ModelType;
   temperature: number;
+  max_tokens: number;
 }
 
 export class ChatCompletionNodeModel extends ParentNodeModel<ChatCompletionNodeOptions> {
@@ -34,6 +35,7 @@ export class ChatCompletionNodeModel extends ParentNodeModel<ChatCompletionNodeO
       prompt_type: prompt_type,
       model: model,
       temperature: 0.85,
+      max_tokens: 512,
     });
   }
 
@@ -45,6 +47,7 @@ export class ChatCompletionNodeModel extends ParentNodeModel<ChatCompletionNodeO
       prompt_type: this.options.prompt_type,
       model: this.options.model,
       temperature: this.options.temperature,
+      max_tokens: this.options.max_tokens,
     };
   }
 
@@ -55,6 +58,7 @@ export class ChatCompletionNodeModel extends ParentNodeModel<ChatCompletionNodeO
     this.options.prompt_type = event.data.prompt_type;
     this.options.model = event.data.model;
     this.options.temperature = event.data.temperature;
+    this.options.max_tokens = event.data.max_tokens;
   }
 
   collectData?(
@@ -86,9 +90,6 @@ export class ChatCompletionNodeModel extends ParentNodeModel<ChatCompletionNodeO
         });
     });
 
-    // TODO: add this as a parameter
-    const max_tokens = 512
-
     if (!estimatePrice) {
       const completion = (
         await axios
@@ -96,7 +97,7 @@ export class ChatCompletionNodeModel extends ParentNodeModel<ChatCompletionNodeO
             messages: messagePath,
             model: this.getOptions().model,
             temperature: this.getOptions().temperature,
-            max_tokens: max_tokens,
+            max_tokens: this.getOptions().max_tokens,
           })
           .catch((error: AxiosError) => {
             throw new Error(JSON.stringify(error.toJSON()));
@@ -120,7 +121,7 @@ export class ChatCompletionNodeModel extends ParentNodeModel<ChatCompletionNodeO
             messages: messagePath,
             model: this.getOptions().model,
             temperature: this.getOptions().temperature,
-            max_tokens: max_tokens,
+            max_tokens: this.getOptions().max_tokens,
           })
           .catch((error: AxiosError) => {
             throw new Error(JSON.stringify(error.toJSON()));
@@ -131,7 +132,7 @@ export class ChatCompletionNodeModel extends ParentNodeModel<ChatCompletionNodeO
       flow_data.push({
         type: this.options.prompt_type || PromptType.Assistant,
         data: {
-          content: "I" + " I".repeat(max_tokens - 1),
+          content: "I" + " I".repeat(this.getOptions().max_tokens - 1),
         },
       });
 
@@ -172,6 +173,10 @@ export class ChatCompletionNodeModel extends ParentNodeModel<ChatCompletionNodeO
   }
 
   setTemperature(temp: string) {
-    this.options.temperature = +temp;
+    this.options.temperature = +temp ? +temp : 0;
+  }
+
+  setMaxTokens(max_tokens: string) {
+    this.options.max_tokens = +max_tokens ? +max_tokens: 512;
   }
 }

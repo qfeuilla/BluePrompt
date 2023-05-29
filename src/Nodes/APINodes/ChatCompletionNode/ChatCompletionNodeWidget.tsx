@@ -64,6 +64,26 @@ export class ChatCompletionRenderContent extends React.Component<
               this.props.node.setTemperature(e.currentTarget.value);
             }}
           />
+          <input
+            style={{
+              textAlign: "end",
+              width: "20%",
+            }}
+            onKeyDown={(e) => {
+              e.stopPropagation();
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+            }}
+            type="text"
+            defaultValue={this.props.node.getOptions().max_tokens}
+            onChange={(e) => {
+              this.props.node.setMaxTokens(e.currentTarget.value);
+            }}
+          />
         </div>
 
         <div style={{ margin: 5 }}>
