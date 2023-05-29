@@ -124,7 +124,10 @@ function SavesComponent(props) {
     <CreatableSelect
       onFocus={listSaves}
       isLoading={isLoading}
-      onChange={(newValue) => props.onChange(newValue!.label)}
+      onChange={(newValue) => {
+        props.onChange(newValue!.label);
+        setValue(newValue);
+      }}
       onCreateOption={handleCreate}
       options={options}
       defaultValue={{ label: "default", value: "default" }}
@@ -136,12 +139,6 @@ function SavesComponent(props) {
 function App() {
   var engine = createEngine();
   var current_graph = "default";
-  var chat_cache: {
-    [tag: string]: {
-      flow_data: { type: string; data: any }[];
-      skip?: number;
-    };
-  } = {};
 
   var running: number = 0;
   var total_experiments: number = 0;
@@ -163,6 +160,19 @@ function App() {
   engine.getLinkFactories().registerFactory(new ArrowedLinkFactory());
 
   var model = new DiagramModel();
+
+  const resetGraph = () => {
+    // reset all currently used var, contents and virutal varws
+    (model.getNodes() as ParentNodeModel[]).forEach((node: ParentNodeModel) => {
+      node.resetUsedVariable();
+      node.leftPort()?.resetResolved();
+      node.topPort()?.resetResolved();
+      node.bottomPort()?.resetResolved();
+      node.rightPort()?.resetResolved();
+      node._resetGraph();
+      node.fixPortConnections();
+    });
+  };
 
   const ChangeSelectedGraph = (selected_graph: string) => {
     current_graph = selected_graph;
@@ -435,10 +445,6 @@ function App() {
 
     const variable_generator = generateAllCombinations(var_nodes);
 
-    if (var_nodes.length < 1) {
-      cache = chat_cache;
-    }
-
     var flow_data: { type: string; data: any }[] = [];
     var skip: number | undefined;
     var current_generation_it;
@@ -470,21 +476,8 @@ function App() {
 
       current_generation_it = variable_generator.next();
 
-      if (var_nodes.length > 0) {
-        // reset all currently used var, contents and virtual vars
-        (model.getNodes() as ParentNodeModel[]).forEach(
-          (node: ParentNodeModel) => {
-            node.resetUsedVariable();
-            node.leftPort()?.resetResolved();
-            node.topPort()?.resetResolved();
-            node.bottomPort()?.resetResolved();
-            node.rightPort()?.resetResolved();
-            node._resetGraph();
-          }
-        );
-      } else {
-        chat_cache = cache;
-      }
+      resetGraph();
+
       current_collection = {};
 
       engine.repaintCanvas();
@@ -606,7 +599,8 @@ function App() {
         { autoClose: false, type: "info" }
       );
       toast(
-        `(calculated with the maximum amount of token at each of the nodes, in reality you can expect 50%/70% lower cost for tasks that doesn't require a lot of tokens completions).
+        `Calculated with the maximum amount of token at each of the nodes, and without caching, in reality you can expect 50%/70% lower cost for tasks that doesn't require a lot of tokens completions.
+        You can expect even way more if your grah loop through variable later on the graph.
         If you want a more accurate reading, set the maximum tokens of each api call as close as possible as your average run, estimate the price again and then put it back to original.`,
         {}
       );
@@ -711,16 +705,7 @@ function App() {
 
   document.addEventListener("keydown", handleKeyPress);
   window.addEventListener("beforeunload", (ev) => {
-    // reset all currently used var, contents and virutal varws
-    (model.getNodes() as ParentNodeModel[]).forEach((node: ParentNodeModel) => {
-      node.resetUsedVariable();
-      node.leftPort()?.resetResolved();
-      node.topPort()?.resetResolved();
-      node.bottomPort()?.resetResolved();
-      node.rightPort()?.resetResolved();
-      node._resetGraph();
-    });
-
+    resetGraph();
     saveNowGraph();
   });
   return (

@@ -185,6 +185,18 @@ export class ParentNodeModel<
     this.options.in_use_variables = [];
   }
 
+  fixPortConnections(): void {
+    if (this.leftPort()) {
+      this.leftPort()!.getOptions().connected =  this.leftPort()!.listLinks().length
+    } if (this.rightPort()) {
+      this.rightPort()!.getOptions().connected =  this.rightPort()!.listLinks().length
+    } if (this.bottomPort()) {
+      this.bottomPort()!.getOptions().connected =  this.bottomPort()!.listLinks().length
+    } if (this.topPort()) {
+      this.topPort()!.getOptions().connected =  this.topPort()!.listLinks().length
+    }
+  }
+
   isRoot(): boolean {
     return this.topPort()
       ? Object.keys(this.topPort()!.listLinks()).length < 1
