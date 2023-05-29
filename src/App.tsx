@@ -456,7 +456,10 @@ function App() {
     var fail_in_row: number = 0;
     var failed: boolean = false;
 
+    var price = 0;
+
     var total_price: number | undefined = undefined;
+    var global_price: number = 0;
 
     var current_collection: { [collect_name: string]: string };
     const run_name = current_graph + "_run_" + crypto.randomUUID();
@@ -472,7 +475,7 @@ function App() {
       // trick to reload the bar
       document.getElementById(
         "progress"
-      )!.innerHTML = `${running}/${total_experiments}`;
+      )!.innerHTML = `${running}/${total_experiments} Price : ${global_price}$`;
 
       current_generation_it = variable_generator.next();
 
@@ -530,25 +533,12 @@ function App() {
         ({ flow_data, skip } = cache[tag]);
         if (skip === -1) {
           try {
-            // TODO: carful when adding new nodes, maybe make something cleaner than this
-            if (
-              estimate_price &&
-              current_node.getOptions().type === OtherNodeTypes.ChatCompletion
-            ) {
-              var price;
-              ({ price, skip } = (await current_node._execute(
-                flow_data,
-                current_generation,
-                estimate_price
-              )) as { price: number; skip: number | undefined });
-              total_price += price;
-            } else {
-              skip = (await current_node._execute(
-                flow_data,
-                current_generation,
-                estimate_price
-              )) as number | undefined;
-            }
+            ({ price, skip } = await current_node._execute(
+              flow_data,
+              current_generation,
+              estimate_price
+            ));
+            total_price += price;
           } catch (error) {
             console.log(error);
             toast((error as Error)["message"], { type: "error" });
@@ -557,6 +547,7 @@ function App() {
           }
           cache[tag] = { flow_data: structuredClone(flow_data), skip: skip };
         } else {
+          // TODO: add the estimation for the skip price if necessary
           current_node._onSkip(flow_data, current_generation, skip);
         }
         current_node._collectData(
@@ -588,6 +579,7 @@ function App() {
         });
         fail_in_row = 0;
       }
+      global_price += total_price;
       engine.repaintCanvas();
     }
     if (estimate_price) {

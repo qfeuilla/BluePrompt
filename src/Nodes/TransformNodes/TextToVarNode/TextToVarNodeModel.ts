@@ -1,77 +1,98 @@
 import { DeserializeEvent } from "@projectstorm/react-diagrams";
-import { NodeTypes, ParentNodeModel, ParentNodeModelOptions, TransformNodeTypes } from "../../ParentNode/ParentNodeModel";
+import {
+  NodeTypes,
+  ParentNodeModel,
+  ParentNodeModelOptions,
+  TransformNodeTypes,
+} from "../../ParentNode/ParentNodeModel";
 import { VariableNodeModel } from "../../VariableNode/VariableNodeModel";
 
 export interface TextToVarNodeOptions extends ParentNodeModelOptions {
-    var_name: string;
+  var_name: string;
 }
 
 export class TextToVarNodeModel extends ParentNodeModel<TextToVarNodeOptions> {
-    constructor(var_name: string) {
-        super("lr", {
-            type: TransformNodeTypes.Text2Var,
-            color: 'rgb(20,60,200)',
-            var_name: var_name,
-        })
-    }
+  constructor(var_name: string) {
+    super("lr", {
+      type: TransformNodeTypes.Text2Var,
+      color: "rgb(20,60,200)",
+      var_name: var_name,
+    });
+  }
 
-    serialize() : any {
-        return {
-            ...super.serialize(),
-            var_name: this.options.var_name
-        }
-    }
+  serialize(): any {
+    return {
+      ...super.serialize(),
+      var_name: this.options.var_name,
+    };
+  }
 
-    deserialize(event: DeserializeEvent<this>): void {
-        super.deserialize(event);
-        this.options.var_name = event.data.var_name;
-    }
+  deserialize(event: DeserializeEvent<this>): void {
+    super.deserialize(event);
+    this.options.var_name = event.data.var_name;
+  }
 
-    collectData?(
-        flow_data: { type: string; data: any }[],
-        current_collection: { [collect_name: string] : string},
-        currentGen: { [param_name: string]: number }
-      ) {
-        current_collection[this.getOptions().name!] = flow_data.slice(-1)[0].data;
-      }
+  collectData?(
+    flow_data: { type: string; data: any }[],
+    current_collection: { [collect_name: string]: string },
+    currentGen: { [param_name: string]: number }
+  ) {
+    current_collection[this.getOptions().name!] = flow_data.slice(-1)[0].data;
+  }
 
-    execute(flow_data: { type: string; data: any; }[], currentGen: { [param_name: string]: number; }, next_nodes: ParentNodeModel<ParentNodeModelOptions>[], variables: VariableNodeModel[]): Promise<number> {
-        const choosen_next_node = 0;
-        const current_content = flow_data.slice(-1)[0].data.content;
+  execute(
+    flow_data: { type: string; data: any }[],
+    currentGen: { [param_name: string]: number },
+    next_nodes: ParentNodeModel<ParentNodeModelOptions>[],
+    variables: VariableNodeModel[]
+  ): Promise<{ price: number; skip: number | undefined }> {
+    const choosen_next_node = 0;
+    const current_content = flow_data.slice(-1)[0].data.content;
 
-        next_nodes[choosen_next_node].addVirtualVariableNode(this.getOptions().var_name, [current_content])
-        currentGen[this.getOptions().var_name] = 0;
+    next_nodes[choosen_next_node].addVirtualVariableNode(
+      this.getOptions().var_name,
+      [current_content]
+    );
+    currentGen[this.getOptions().var_name] = 0;
 
-        this.addInUseVariable(this.getOptions().var_name);
+    this.addInUseVariable(this.getOptions().var_name);
 
-        flow_data.splice(0, flow_data.length);
-        flow_data.push({
-            type: TransformNodeTypes.Text2Var as string,
-            data: current_content,
-        })
+    flow_data.splice(0, flow_data.length);
+    flow_data.push({
+      type: TransformNodeTypes.Text2Var as string,
+      data: current_content,
+    });
 
-        return Promise.resolve(choosen_next_node);
-    }
+    return Promise.resolve({price: 0, skip: choosen_next_node});
+  }
 
-    onSkip(flow_data: { type: string; data: any; }[], currentGen: { [param_name: string]: number; }, next_nodes: ParentNodeModel<ParentNodeModelOptions>[], variables: VariableNodeModel[], previous_skip: number | undefined): Promise<number | undefined> {
-        const choosen_next_node = 0;
-        const current_content = flow_data.slice(-1)[0].data;
+  onSkip(
+    flow_data: { type: string; data: any }[],
+    currentGen: { [param_name: string]: number },
+    next_nodes: ParentNodeModel<ParentNodeModelOptions>[],
+    variables: VariableNodeModel[],
+    previous_skip: number | undefined
+  ): Promise<number | undefined> {
+    const choosen_next_node = 0;
+    const current_content = flow_data.slice(-1)[0].data;
 
-        next_nodes[choosen_next_node].addVirtualVariableNode(this.getOptions().var_name, [current_content])
-        currentGen[this.getOptions().var_name] = 0;
+    next_nodes[choosen_next_node].addVirtualVariableNode(
+      this.getOptions().var_name,
+      [current_content]
+    );
+    currentGen[this.getOptions().var_name] = 0;
 
-        this.addInUseVariable(this.getOptions().var_name);
-        flow_data.splice(0, flow_data.length);
-        flow_data.push({
-            type: TransformNodeTypes.Text2Var as string,
-            data: current_content,
-        })
+    this.addInUseVariable(this.getOptions().var_name);
+    flow_data.splice(0, flow_data.length);
+    flow_data.push({
+      type: TransformNodeTypes.Text2Var as string,
+      data: current_content,
+    });
 
-        return Promise.resolve(choosen_next_node);
-    }
+    return Promise.resolve(choosen_next_node);
+  }
 
-
-    updateVarName(var_name: string) {
-        this.options.var_name = var_name;
-    }
+  updateVarName(var_name: string) {
+    this.options.var_name = var_name;
+  }
 }

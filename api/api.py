@@ -92,17 +92,22 @@ def complete():
     request.get_json(force=True)
     messages = request.json['messages']
     max_tokens = request.json['max_tokens'] if 'max_tokens' in request.json else 512
+    model = request.json["model"]
     prev_node = None
-    
+    encoding = tiktoken.encoding_for_model(model)
+    count = 0
+
     for message in messages:
-        node = ChatNode(message["role"], message["content"])
+        content = message["content"]
+        node = ChatNode(message["role"], content)
         if prev_node:
             prev_node.children.append(node)
             node.parent = prev_node
         prev_node = node
+        count += len(encoding.encode(content))
 
-    child = prev_node.complete(model=request.json["model"], temperature=request.json["temperature"], max_tokens=max_tokens)
-    return {"response": child.content}
+    child = prev_node.complete(model=model, temperature=request.json["temperature"], max_tokens=max_tokens)
+    return {"price": ((count / 1000) * price_table[model][0]) + ((len(encoding.encode(child.content)) / 1000) * price_table[model][1]), "completion": child.content}
 
 @app.route("/load_graph", methods=['POST'])
 def load_graph():

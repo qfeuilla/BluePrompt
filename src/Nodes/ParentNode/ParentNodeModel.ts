@@ -272,7 +272,7 @@ export class ParentNodeModel<
     flow_data: { type: string; data: any }[],
     currentGen: { [param_name: string]: number },
     estimatePrice: boolean,
-  ): Promise<number | undefined | {price: number, skip: number | undefined}> {
+  ): Promise<{price: number, skip: number | undefined}> {
     if (this.execute) {
       return await this.execute(
         flow_data,
@@ -343,7 +343,7 @@ export class ParentNodeModel<
     next_nodes: ParentNodeModel[],
     variables: VariableNodeModel[],
     estimatePrice: boolean,
-  ): Promise<number | undefined | {price: number, skip: number | undefined}>;
+  ): Promise<{price: number, skip: number | undefined}>;
 
   async onSkip?(
     flow_data: { type: string; data: any }[],

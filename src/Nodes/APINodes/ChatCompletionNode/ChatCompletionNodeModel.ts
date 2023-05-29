@@ -76,7 +76,7 @@ export class ChatCompletionNodeModel extends ParentNodeModel<ChatCompletionNodeO
     next_nodes: ParentNodeModel<ParentNodeModelOptions>[],
     variables: VariableNodeModel[],
     estimatePrice: boolean
-  ): Promise<number | undefined | { price: number; skip: number | undefined }> {
+  ): Promise<{ price: number; skip: number | undefined }> {
     const messagePath: {
       content: string;
       role: string;
@@ -91,7 +91,7 @@ export class ChatCompletionNodeModel extends ParentNodeModel<ChatCompletionNodeO
     });
 
     if (!estimatePrice) {
-      const completion = (
+      const response = (
         await axios
           .post("http://localhost:5000/complete_chat", {
             messages: messagePath,
@@ -102,18 +102,18 @@ export class ChatCompletionNodeModel extends ParentNodeModel<ChatCompletionNodeO
           .catch((error: AxiosError) => {
             throw new Error(JSON.stringify(error.toJSON()));
           })
-      ).data["response"];
+      ).data;
 
-      this.getOptions().content = completion;
+      this.getOptions().content = response.completioon;
 
       flow_data.push({
         type: this.options.prompt_type || PromptType.Assistant,
         data: {
-          content: completion,
+          content: response.completion,
         },
       });
 
-      return undefined;
+      return {price: response.price, skip: undefined};
     } else {
       const price = (
         await axios
