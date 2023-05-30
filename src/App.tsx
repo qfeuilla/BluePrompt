@@ -577,12 +577,22 @@ function App() {
             flow_data
           );
         }
+
+        // trick to reload the bar
+        document.getElementById(
+          "progress"
+        )!.innerHTML = `${running}/${total_experiments} Price : ${
+          global_price + total_price
+        }$`;
+
         engine.repaintCanvas();
       }
+      global_price += total_price;
       if (failed) {
         fail_in_row += 1;
       } else {
         current_collection["graph_id"] = `${running}.json`;
+        current_collection["price_until_there"] = global_price.toString();
         experimentation_saves.collections.push(current_collection);
         console.log(experimentation_saves);
         // save the current experiment
@@ -593,7 +603,6 @@ function App() {
         saveNowGraph(`../experiments/${run_name}/${running}`);
         fail_in_row = 0;
       }
-      global_price += total_price;
       engine.repaintCanvas();
     }
     if (estimate_price) {

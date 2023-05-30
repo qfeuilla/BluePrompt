@@ -54,6 +54,8 @@ class ChatNode:
                         **kwargs
                     )
                     retry = 0
+                    message = response["choices"][0]["message"]
+                    child = ChatNode(message["role"], message["content"])
                 else:
                     response = openai.Completion.create(
                         model=model,
@@ -63,14 +65,13 @@ class ChatNode:
                         **kwargs
                     )
                     retry = 0
+                    message = response["choices"][0]["text"]
+                    child = ChatNode("assistant", message)
             except Exception as e:
                 # If last pass then raise the error.
                 if (retry == 1):
                     raise e
                 retry -= 1
-
-        message = response["choices"][0]["text"]
-        child = ChatNode("assistant", message)
         self.children.append(child)
         child.parent = self
         return child
