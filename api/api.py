@@ -9,17 +9,29 @@ import pandas as pd
 import tiktoken
 
 price_table = {
-	"gpt-4" : [0.03, 0.06], 
-    "gpt-4-32k": [0.06, 0.12], 
+    "gpt-4" : [0.03, 0.06],
+    "gpt-4-32k": [0.06, 0.12],
     "gpt-3.5-turbo": [0.002, 0.002],
+    "text-davinci-003": [0.02, 0.02],
+    "text-davinci-002": [0.02, 0.02],
+    "davinci": [0.02, 0.02],
+}
+
+is_chat = {
+    "gpt-4" : True,
+    "gpt-4-32k": True,
+    "gpt-3.5-turbo": True,
+    "text-davinci-003": False,
+    "text-davinci-002": False,
+    "davinci": False,
 }
 
 assert os.getenv("OPENAI_API_KEY") is not None, "You must export OPENAI_API_KEY as your OpenAI API key (https://beta.openai.com/account/api-keys)"
 openai.api = os.getenv("OPENAI_API_KEY")
 
 save_Lock = Lock()
+save_exp_Lock = Lock()
 
-openai.Model.list()
 class ChatNode:
     def __init__(self, role: str, content: str):
         self.role = role # either "system", "user", or "assistant"
@@ -27,29 +39,38 @@ class ChatNode:
         self.children: List[ChatNode] = [] # a list of ChatNode objects
         self.parent: Optional[ChatNode] = None # the parent node
 
-    def complete(self, model: str = "gpt-3.5-turbo", temperature: float = 0.7, max_tokens=512, **kwargs):
+    def complete(self, model: str = "gpt-3.5-turbo", temperature: float = 0.7, max_tokens=512, is_chat: bool = True, **kwargs):
         # append the completion of the current branch to the child
         messages = self.get_messages() # get the messages from the root to this node
         retry = 3
         while (retry):
             try:
-                response = openai.ChatCompletion.create(
-                    model=model,
-                    messages=messages,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                    **kwargs
-                )
-                retry = 0
+                if (is_chat):
+                    response = openai.ChatCompletion.create(
+                        model=model,
+                        messages=messages,
+                        temperature=temperature,
+                        max_tokens=max_tokens,
+                        **kwargs
+                    )
+                    retry = 0
+                else:
+                    response = openai.Completion.create(
+                        model=model,
+                        prompt="\n".join([m["content"] for m in messages]),
+                        temperature=temperature,
+                        max_tokens=max_tokens,
+                        **kwargs
+                    )
+                    retry = 0
             except Exception as e:
                 # If last pass then raise the error.
                 if (retry == 1):
                     raise e
                 retry -= 1
 
-
-        message = response["choices"][0]["message"]
-        child = ChatNode(message["role"], message["content"])
+        message = response["choices"][0]["text"]
+        child = ChatNode("assistant", message)
         self.children.append(child)
         child.parent = self
         return child
@@ -106,7 +127,7 @@ def complete():
         prev_node = node
         count += len(encoding.encode(content))
 
-    child = prev_node.complete(model=model, temperature=request.json["temperature"], max_tokens=max_tokens)
+    child = prev_node.complete(model=model, temperature=request.json["temperature"], max_tokens=max_tokens, is_chat=is_chat[model])
     return {"price": ((count / 1000) * price_table[model][0]) + ((len(encoding.encode(child.content)) / 1000) * price_table[model][1]), "completion": child.content}
 
 @app.route("/load_graph", methods=['POST'])
@@ -122,6 +143,9 @@ def load_graph():
 def save_graph():
     request.get_json(force=True)
     path = request.json["path"]
+    _dir = "/".join(path.split("/")[:-1])
+    if not os.path.exists(_dir):
+        os.makedirs(_dir)
     content = request.json["content"]
     save_Lock.acquire(True)
     json.dump(content, open(path, "w+"), indent=4)
@@ -134,9 +158,9 @@ def save_experiment():
     path = request.json["path"]
     content = request.json["content"]["collections"]
     data = pd.DataFrame.from_records(content)
-    save_Lock.acquire(True)
+    save_exp_Lock.acquire(True)
     data.to_csv(path)
-    save_Lock.release()
+    save_exp_Lock.release()
     return {"status": "done"}
 
 @app.route("/list_saves", methods=['POST'])

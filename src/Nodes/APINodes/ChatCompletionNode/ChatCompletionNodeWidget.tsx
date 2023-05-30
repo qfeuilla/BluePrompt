@@ -43,6 +43,9 @@ export class ChatCompletionRenderContent extends React.Component<
             <option value={ModelType.GPT3}>turbo gpt3.5</option>
             <option value={ModelType.GPT4}>gpt4</option>
             <option value={ModelType.GPT4_32k}>gpt4 32k</option>
+            <option value={ModelType.DAVINCI_002}>text davinci 002</option>
+            <option value={ModelType.DAVINCI_003}>text davinci 003</option>
+            <option value={ModelType.DAVINCI}>davinci</option>
           </select>
           <input
             style={{

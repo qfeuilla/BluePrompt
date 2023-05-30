@@ -13,6 +13,9 @@ export enum ModelType {
   GPT4 = "gpt-4",
   GPT4_32k = "gpt-4-32k",
   GPT3 = "gpt-3.5-turbo",
+  DAVINCI_003 = "text-davinci-003",
+  DAVINCI_002 = "text-davinci-002",
+  DAVINCI = "davinci",
 }
 
 export interface ChatCompletionNodeOptions extends ParentNodeModelOptions {

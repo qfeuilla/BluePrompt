@@ -398,11 +398,11 @@ function App() {
     // autoDistribute();
   };
 
-  const saveNowGraph = () => {
+  const saveNowGraph = (graph_name = current_graph) => {
     // TODO: unlock every nodes
 
     axios.post("http://localhost:5000/save_graph", {
-      path: `../saves/${current_graph}.json`,
+      path: `../saves/${graph_name}.json`,
       content: model.serialize(),
     });
   };
@@ -582,6 +582,7 @@ function App() {
       if (failed) {
         fail_in_row += 1;
       } else {
+        current_collection["graph_id"] = `${running}.json`;
         experimentation_saves.collections.push(current_collection);
         console.log(experimentation_saves);
         // save the current experiment
@@ -589,6 +590,7 @@ function App() {
           path: `../experiments/${run_name}.csv`,
           content: experimentation_saves,
         });
+        saveNowGraph(`../experiments/${run_name}/${running}`);
         fail_in_row = 0;
       }
       global_price += total_price;
@@ -702,7 +704,6 @@ function App() {
     }
     console.log(`Key pressed: ${e.key}`);
     console.log(e);
-    saveNowGraph();
   };
 
   document.addEventListener("keydown", handleKeyPress);
@@ -715,10 +716,10 @@ function App() {
       className="App"
       onMouseUp={(e) => {
         changeSelectedNodeType(e);
-        saveNowGraph();
+        // saveNowGraph();
       }}
       onKeyUp={(e) => {
-        saveNowGraph();
+        // saveNowGraph();
       }}
       onMouseMove={(e) => {
         _mouseX = engine.getRelativeMousePoint(e).x - 100;
@@ -781,7 +782,9 @@ function App() {
           />
           <input
             type="button"
-            onClick={saveNowGraph}
+            onClick={() => {
+              saveNowGraph();
+            }}
             value={"save graph"}
             style={{ width: "10%", height: "5vh" }}
           />
