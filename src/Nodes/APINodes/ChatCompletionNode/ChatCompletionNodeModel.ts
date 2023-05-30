@@ -37,7 +37,7 @@ export class ChatCompletionNodeModel extends ParentNodeModel<ChatCompletionNodeO
       color: "rgb(255, 140, 0)",
       prompt_type: prompt_type,
       model: model,
-      temperature: 0.85,
+      temperature: 1,
       max_tokens: 512,
     });
   }
