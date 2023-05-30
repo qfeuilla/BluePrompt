@@ -161,6 +161,9 @@ function App() {
 
   var model = new DiagramModel();
 
+  var selected_node_type: NodeTypes = OtherNodeTypes.Variable;
+  var hidden_selected_node_type: NodeTypes = OtherNodeTypes.Variable;
+
   const resetGraph = () => {
     // reset all currently used var, contents and virutal varws
     (model.getNodes() as ParentNodeModel[]).forEach((node: ParentNodeModel) => {
@@ -232,23 +235,27 @@ function App() {
     }
     switch (selected_node.getOptions().type) {
       case OtherNodeTypes.Variable:
-        selected_node_type = OtherNodeTypes.Data;
+        hidden_selected_node_type = OtherNodeTypes.Data;
         break;
       case OtherNodeTypes.Data:
-        selected_node_type = OtherNodeTypes.ChatCompletion;
+        hidden_selected_node_type = OtherNodeTypes.ChatCompletion;
         break;
       case OtherNodeTypes.ChatCompletion:
-        selected_node_type = TransformNodeTypes.Text2Var;
+        hidden_selected_node_type = TransformNodeTypes.Text2Var;
         break;
       case TransformNodeTypes.Text2Var:
-        selected_node_type = OtherNodeTypes.Data;
+        hidden_selected_node_type = OtherNodeTypes.Data;
         break;
       default:
         break;
     }
   };
 
-  const AddChild = (prompt_type = PromptType.User, content?: string) => {
+  const AddChild = (
+    shortcut: boolean = false,
+    prompt_type = PromptType.User,
+    content?: string
+  ) => {
     var selected_node: ParentNodeModel =
       model.getSelectedEntities()[0] as ParentNodeModel;
     if (!selected_node) {
@@ -271,7 +278,7 @@ function App() {
         new_node.topPort() as SimplePortModel
       );
     } else {
-      switch (selected_node_type) {
+      switch (shortcut ? hidden_selected_node_type : selected_node_type) {
         case OtherNodeTypes.Variable:
           if (selected_node.getOptions().type === OtherNodeTypes.Variable) {
             // toast("you can't add a VariableNode as a child to a VariableNode", {
@@ -664,8 +671,6 @@ function App() {
   var _mouseX = 0;
   var _mouseY = 0;
 
-  var selected_node_type: NodeTypes = OtherNodeTypes.Variable;
-
   const handleKeyPress = (e: KeyboardEvent) => {
     if (e.key === "a" && e.ctrlKey) {
       e.preventDefault();
@@ -687,7 +692,7 @@ function App() {
     }
     if (e.key === "p" && e.ctrlKey) {
       e.preventDefault();
-      AddChild();
+      AddChild(true);
       e.stopPropagation();
     }
 

@@ -188,7 +188,7 @@ export class ParentNodeModel<
   fixPortConnections(): void {
     if (this.leftPort()) {
       this.leftPort()!.getOptions().connected =  this.leftPort()!.listLinks().filter((link) => {
-        link.getSourcePort().getParent().getOptions().type !== OtherNodeTypes.Variable
+        return link.getSourcePort().getParent().getOptions().type !== OtherNodeTypes.Variable
       }).length
     } if (this.rightPort()) {
       this.rightPort()!.getOptions().connected =  this.rightPort()!.listLinks().length
