@@ -112,7 +112,7 @@ function SavesComponent(props) {
     setOptions([]);
     (
       (await axios.post("http://localhost:5000/list_saves", {})).data[
-        "paths"
+      "paths"
       ] as string[]
     ).forEach((path: string) => {
       setOptions((prev) => [...prev, createOption(path)]);
@@ -307,8 +307,8 @@ function App() {
             new_node.setPosition(
               selected_node.getX(),
               selected_node.getY() +
-                (selected_node.getOptions().height || 0) +
-                300
+              (selected_node.getOptions().height || 0) +
+              300
             );
           } else {
             link = (selected_node.rightPort() as SimplePortModel).link(
@@ -332,8 +332,8 @@ function App() {
             new_node.setPosition(
               selected_node.getX(),
               selected_node.getY() +
-                (selected_node.getOptions().height || 0) +
-                300
+              (selected_node.getOptions().height || 0) +
+              300
             );
           } else {
             link = (selected_node.rightPort() as SimplePortModel).link(
@@ -356,10 +356,10 @@ function App() {
             );
             new_node.setPosition(
               selected_node.getX() +
-                ((
-                  (selected_node as ChatCompletionNodeModel) || DataNodeModel
-                ).getOptions().content_sizes?.x || 0) +
-                300,
+              ((
+                (selected_node as ChatCompletionNodeModel) || DataNodeModel
+              ).getOptions().content_sizes?.x || 0) +
+              300,
               selected_node.getY()
             );
           } else {
@@ -398,10 +398,10 @@ function App() {
     // autoDistribute();
   };
 
-  const saveNowGraph = (graph_name = current_graph) => {
+  const saveNowGraph = async (graph_name = current_graph) => {
     // TODO: unlock every nodes
 
-    axios.post("http://localhost:5000/save_graph", {
+    await axios.post("http://localhost:5000/save_graph", {
       path: `../saves/${graph_name}.json`,
       content: model.serialize(),
     });
@@ -476,7 +476,7 @@ function App() {
 
     // display the experiment toolbar
     document.getElementById("experiment_bar")!.hidden = false;
-    
+
     while (true) {
       running += 1;
       // trick to reload the bar
@@ -581,9 +581,8 @@ function App() {
         // trick to reload the bar
         document.getElementById(
           "progress"
-        )!.innerHTML = `${running}/${total_experiments} Price : ${
-          global_price + total_price
-        }$`;
+        )!.innerHTML = `${running}/${total_experiments} Price : ${global_price + total_price
+          }$`;
 
         engine.repaintCanvas();
       }
@@ -596,10 +595,16 @@ function App() {
         experimentation_saves.collections.push(current_collection);
         console.log(experimentation_saves);
         // save the current experiment
-        axios.post("http://localhost:5000/save_experiment", {
+
+        var data = (await axios.post("http://localhost:5000/save_experiment", {
           path: `../experiments/${run_name}.csv`,
           content: experimentation_saves,
-        });
+        })).data;
+
+        console.log(data["abs_path"])
+
+        toast(<a onClick={() => {navigator.clipboard.writeText(data["abs_path"])}}>Click on the toast to copy experiment report file path</a>, { type: "info" })
+        
         saveNowGraph(`../experiments/${run_name}/${running}`);
         fail_in_row = 0;
       }
@@ -607,8 +612,7 @@ function App() {
     }
     if (estimate_price) {
       toast(
-        `The maximum total cost of the run will be : ${
-          total_price! * total_experiments
+        `The maximum total cost of the run will be : ${total_price! * total_experiments
         }$.
         At ${total_price!}$ / runs`,
         { autoClose: false, type: "info" }
@@ -620,6 +624,8 @@ function App() {
         {}
       );
     }
+    toast(<a onClick={() => {navigator.clipboard.writeText(data["abs_path"])}}>Click on the toast to copy experiment report file path</a>, { autoClose: false , type: "info" })
+
     running = 0;
     kill = false;
     stop = false;
@@ -781,6 +787,27 @@ function App() {
               </option>
             </select>
           </div>
+          <input
+            type="button"
+            onClick={() => {
+              switch (selected_node_type) {
+                case OtherNodeTypes.Variable:
+                  AddVarNode(_mouseX, _mouseY);
+                  break;
+                case OtherNodeTypes.Data:
+                  AddDataNode(_mouseX, _mouseY);
+                  break;
+                case OtherNodeTypes.ChatCompletion:
+                  AddAPINode(_mouseX, _mouseY);
+                  break;
+                case TransformNodeTypes.Text2Var:
+                  AddTransformNode(_mouseX, _mouseY);
+                  break;
+              }
+            }}
+            value={"add node"}
+            style={{ width: "10%", height: "5vh" }}
+          />
           <input
             type="button"
             onClick={() => {

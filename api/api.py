@@ -7,6 +7,11 @@ from threading import Lock
 from flask_cors import CORS
 import pandas as pd
 import tiktoken
+from platform import uname
+
+
+def in_wsl() -> bool:
+    return 'microsoft-standard' in uname().release
 
 price_table = {
     "gpt-4" : [0.03, 0.06],
@@ -161,8 +166,13 @@ def save_experiment():
     data = pd.DataFrame.from_records(content)
     save_exp_Lock.acquire(True)
     data.to_csv(path)
+    file_abspath = os.path.abspath(path)
+    if (in_wsl()):
+        file_abspath = "//wsl.localhost/Ubuntu" + file_abspath
+    file_abspath = "file:///" + file_abspath
+
     save_exp_Lock.release()
-    return {"status": "done"}
+    return {"status": "done", "abs_path": file_abspath}
 
 @app.route("/list_saves", methods=['POST'])
 def list_saves():
