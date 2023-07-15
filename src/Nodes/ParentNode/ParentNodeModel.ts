@@ -378,7 +378,7 @@ export class ParentNodeModel<
     current_flow_data: { type: string; data: any }[]
   ) {
     current_nodes.splice(0, 1);
-
+    
     let toFlowToNodes: ParentNodeModel[] = [];
     if (!id) {
       this.flowOutPort().getOptions().resolved += this.getChildren().length;
@@ -406,6 +406,8 @@ export class ParentNodeModel<
       let to_save_skip = Object.keys(cache).includes(tag)
         ? cache[tag]["skip"]
         : -1;
+
+      node.updateCurrentlyUsedVariable()
 
       this.options.in_use_variables!.forEach((variable: string) => {
         if (!node.getOptions().in_use_variables!.includes(variable))

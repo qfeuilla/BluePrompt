@@ -476,7 +476,7 @@ function App() {
 
     // display the experiment toolbar
     document.getElementById("experiment_bar")!.hidden = false;
-
+    
     while (true) {
       running += 1;
       // trick to reload the bar
@@ -718,7 +718,7 @@ function App() {
   document.addEventListener("keydown", handleKeyPress);
   window.addEventListener("beforeunload", (ev) => {
     resetGraph();
-    saveNowGraph();
+    // saveNowGraph();
   });
   return (
     <div
